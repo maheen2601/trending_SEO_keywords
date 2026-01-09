@@ -1,3 +1,8 @@
+
+
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -839,12 +844,62 @@
         .keyword-text {
             font-weight: 500;
             margin-bottom: 0.25rem;
+            flex: 1;
         }
 
         .keyword-title {
             font-weight: 400;
             color: var(--text-secondary);
             font-size: 0.9em;
+        }
+
+        .keyword-header-row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 0.5rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .team-badges {
+            display: flex;
+            gap: 0.25rem;
+            flex-shrink: 0;
+        }
+
+        .team-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 32px;
+            height: 24px;
+            padding: 0 0.5rem;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #ffffff !important;
+            border-radius: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            cursor: default;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+        }
+
+        .team-badge:hover {
+            transform: scale(1.05);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Ensure team badges are visible in both themes */
+        [data-theme="light"] .team-badge,
+        [data-theme="dark"] .team-badge {
+            color: #ffffff !important;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .keyword-card.has-selections {
+            border-left: 3px solid var(--accent-primary);
         }
 
         .keyword-meta {
@@ -955,15 +1010,6 @@
             font-weight: 600;
             font-size: 0.9rem;
             color: #ffffff;
-        }
-
-        .team-badge {
-            background: var(--bg-secondary);
-            padding: 0.3rem 0.75rem;
-            border-radius: 50px;
-            font-size: 0.8rem;
-            color: var(--accent-primary);
-            border: 1px solid var(--border-color);
         }
 
         .keyword-badge {
@@ -1581,10 +1627,7 @@
                         <option value="TCP">TCP</option>
                         <option value="GadInsider">GadInsider</option>
                         <option value="Gossip Herald">Gossip Herald</option>
-                        <option value="Hungama">Hungama</option>
-                        <option value="SEO">SEO</option>
-                        <option value="Data">Data</option>
-                        <option value="Admin">Admin</option>
+                        <option value="Gossip Herald">Hungama</option>
                     </select>
                 </div>
                 
@@ -1676,7 +1719,7 @@
                     <div class="stat-icon-box blue">📊</div>
                     <div class="stat-content">
                         <span class="stat-number" id="filteredCount">0</span>
-                        <span class="stat-label">Available Keywords</span>
+                        <span class="stat-label">Today's Keywords</span>
                     </div>
                 </div>
                 <div class="stat-card-new">
@@ -1858,7 +1901,7 @@
         let selections = [];
         let socket = null;
         let inactivityTimer = null;
-        const INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutes in milliseconds
+        const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes in milliseconds
 
         // Pagination state
         let currentPage = 1;
@@ -1876,6 +1919,9 @@
             
             // Only set timer if user is logged in
             if (currentUser) {
+                // Update session timestamp on activity
+                saveSession(currentUser);
+                
                 inactivityTimer = setTimeout(() => {
                     showToast('Session expired due to inactivity', 'warning');
                     setTimeout(() => {
@@ -1938,7 +1984,55 @@
             document.getElementById('registerPassword').addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') register();
             });
+
+            // Restore session from localStorage if available
+            restoreSession();
         });
+
+        // Session persistence functions
+        function saveSession(user) {
+            const sessionData = {
+                user: user,
+                timestamp: Date.now()
+            };
+            localStorage.setItem('keywordAppSession', JSON.stringify(sessionData));
+        }
+
+        function restoreSession() {
+            try {
+                const sessionStr = localStorage.getItem('keywordAppSession');
+                if (!sessionStr) return;
+
+                const session = JSON.parse(sessionStr);
+                
+                // Check if session is still valid (within 30 minutes)
+                const elapsed = Date.now() - session.timestamp;
+                if (elapsed > INACTIVITY_TIMEOUT) {
+                    // Session expired, clear it
+                    clearSession();
+                    return;
+                }
+
+                // Restore the user
+                if (session.user && session.user.name) {
+                    currentUser = session.user;
+                    showDashboard();
+                    socket.emit('user_online', { username: currentUser.name });
+                    resetInactivityTimer();
+                    showToast('Welcome back, ' + currentUser.name + '!');
+                    
+                    // Update session timestamp
+                    saveSession(currentUser);
+                }
+            } catch (err) {
+                console.error('Error restoring session:', err);
+                clearSession();
+            }
+        }
+
+        function clearSession() {
+            localStorage.removeItem('keywordAppSession');
+        }
 
         // Socket.IO Connection
         function initSocket() {
@@ -2038,6 +2132,7 @@
 
                 if (data.success) {
                     currentUser = data.user;
+                    saveSession(currentUser); // Save session to localStorage
                     showDashboard();
                     socket.emit('user_online', { username: currentUser.name });
                     resetInactivityTimer(); // Start inactivity timer
@@ -2124,6 +2219,9 @@
                 clearTimeout(inactivityTimer);
                 inactivityTimer = null;
             }
+            
+            // Clear saved session
+            clearSession();
             
             socket.emit('user_offline', { username: currentUser?.name });
             currentUser = null;
@@ -2261,28 +2359,49 @@
                 return true;
             });
 
-            // Sort by date and time (newest first)
+            // Sort by sheet order (last row in sheet appears first)
             filtered.sort((a, b) => {
-                const dateA = parseKeywordDate(a.date);
-                const dateB = parseKeywordDate(b.date);
-                
-                // If both have dates, compare them
-                if (dateA && dateB) {
-                    if (dateA !== dateB) {
-                        return dateB.localeCompare(dateA); // Descending order
-                    }
-                    // Same date, compare by time
-                    const timeA = a.time || '00:00:00';
-                    const timeB = b.time || '00:00:00';
-                    return timeB.localeCompare(timeA); // Descending order
-                }
-                // Put items with dates before items without
-                if (dateA && !dateB) return -1;
-                if (!dateA && dateB) return 1;
-                return 0;
+                return b.id - a.id; // Higher id = last in sheet = first on page
             });
 
             return filtered;
+        }
+
+        // Check if any filter is applied
+        function isAnyFilterApplied() {
+            const searchVal = document.getElementById('filterSearch')?.value?.trim() || '';
+            const fromDate = document.getElementById('filterFromDate')?.value || '';
+            const toDate = document.getElementById('filterToDate')?.value || '';
+            const category = document.getElementById('filterCategory')?.value || '';
+            
+            return searchVal !== '' || fromDate !== '' || toDate !== '' || category !== '';
+        }
+
+        // Get today's date in DD-MM-YYYY format for comparison
+        function getTodayDateStr() {
+            const today = new Date();
+            const d = String(today.getDate()).padStart(2, '0');
+            const m = String(today.getMonth() + 1).padStart(2, '0');
+            const y = today.getFullYear();
+            return `${d}-${m}-${y}`; // DD-MM-YYYY
+        }
+        
+        // Get today's date in YYYY-MM-DD format for comparison with parsed dates
+        function getTodayForComparison() {
+            const today = new Date();
+            const d = String(today.getDate()).padStart(2, '0');
+            const m = String(today.getMonth() + 1).padStart(2, '0');
+            const y = today.getFullYear();
+            return `${y}-${m}-${d}`; // YYYY-MM-DD
+        }
+        
+        // Count keywords from today's date
+        function getTodaysKeywordsCount() {
+            const todayStr = getTodayForComparison();
+            return keywords.filter(kw => {
+                const kwDate = parseKeywordDate(kw.date);
+                return kwDate === todayStr;
+            }).length;
         }
 
         function parseKeywordDate(dateStr) {
@@ -2372,6 +2491,46 @@
             applyFilters();
         }
 
+        // Team abbreviations mapping
+        // =====================================================
+        // TEAM ABBREVIATIONS - ADD NEW TEAMS HERE
+        // Format: 'Team Name': { abbr: 'SHORT', color: '#hexcolor' }
+        // =====================================================
+        const TEAM_ABBREVIATIONS = {
+            'Data': { abbr: 'DATA', color: '#e74c3c' },           // Red
+            'GEO': { abbr: 'GEO', color: '#c0392b' },             // Dark Red
+            'The News': { abbr: 'TN', color: '#3498db' },         // Blue
+            'Jang': { abbr: 'JANG', color: '#27ae60' },           // Green
+            'TCP': { abbr: 'TCP', color: '#9b59b6' },             // Purple
+            'GadInsider': { abbr: 'GadIns', color: '#f39c12' },   // Orange
+            'Gossip Herald': { abbr: 'GH', color: '#1abc9c' },    // Teal
+            'Hungama': { abbr: 'HG', color: '#e91e63' }           // Pink
+            // ADD MORE TEAMS BELOW (don't forget comma after each line except last)
+            // 'New Team': { abbr: 'NT', color: '#hexcode' }
+        };
+
+        function getTeamBadge(teamName) {
+            const team = TEAM_ABBREVIATIONS[teamName];
+            if (team) {
+                return { abbr: team.abbr, color: team.color };
+            }
+            // Default: first 2 letters uppercase
+            return { 
+                abbr: teamName.substring(0, 2).toUpperCase(), 
+                color: '#6c757d' 
+            };
+        }
+
+        function getTeamsForKeyword(keyword) {
+            // Get unique teams that have selected this keyword
+            const teams = [...new Set(
+                selections
+                    .filter(s => s.keyword === keyword)
+                    .map(s => s.team)
+            )];
+            return teams;
+        }
+
         function renderKeywords() {
             const grid = document.getElementById('keywordsGrid');
             const paginationContainer = document.getElementById('keywordsPagination');
@@ -2390,8 +2549,18 @@
             // Get filtered keywords (already sorted by date/time newest first)
             const filteredKeywords = getFilteredKeywords();
             
-            // Update counts
-            document.getElementById('filteredCount').textContent = filteredKeywords.length;
+            // Update counts - show today's count by default, or filtered count if any filter is applied
+            const hasFiltersApplied = isAnyFilterApplied();
+            const filteredCountLabel = document.querySelector('#filteredCount + .stat-label') || 
+                                       document.querySelector('#filteredCount').parentElement.querySelector('.stat-label');
+            
+            if (hasFiltersApplied) {
+                document.getElementById('filteredCount').textContent = filteredKeywords.length; // Filtered count
+                if (filteredCountLabel) filteredCountLabel.textContent = 'Filtered Keywords';
+            } else {
+                document.getElementById('filteredCount').textContent = getTodaysKeywordsCount(); // Today's keywords only
+                if (filteredCountLabel) filteredCountLabel.textContent = "Today's Keywords";
+            }
             document.getElementById('totalCount').textContent = keywords.length;
 
             if (filteredKeywords.length === 0) {
@@ -2411,11 +2580,26 @@
             // Render keywords for current page
             grid.innerHTML = paginatedKeywords.map(kw => {
                 const isSelected = selections.some(s => s.user === currentUser?.name && s.keyword === kw.keyword);
+                const teamsSelected = getTeamsForKeyword(kw.keyword);
+                
+                // Generate team badges HTML
+                const teamBadgesHTML = teamsSelected.length > 0 ? `
+                    <div class="team-badges">
+                        ${teamsSelected.map(team => {
+                            const badge = getTeamBadge(team);
+                            return `<span class="team-badge" style="background: ${badge.color};" title="Selected by ${team}">${badge.abbr}</span>`;
+                        }).join('')}
+                    </div>
+                ` : '';
+
                 return `
-                    <div class="keyword-card ${isSelected ? 'selected' : ''}" onclick="toggleKeyword('${kw.keyword.replace(/'/g, "\\'")}')">
+                    <div class="keyword-card ${isSelected ? 'selected' : ''} ${teamsSelected.length > 0 ? 'has-selections' : ''}" onclick="toggleKeyword('${kw.keyword.replace(/'/g, "\\'")}')">
                         <div class="keyword-checkbox"></div>
                         <div class="keyword-info">
-                            <div class="keyword-text">${kw.keyword}${kw.title ? ` <span class="keyword-title">- ${kw.title}</span>` : ''}</div>
+                            <div class="keyword-header-row">
+                                <div class="keyword-text">${kw.keyword}${kw.title ? ` <span class="keyword-title">- ${kw.title}</span>` : ''}</div>
+                                ${teamBadgesHTML}
+                            </div>
                             ${kw.remarks ? `<div class="keyword-remarks">${kw.remarks}</div>` : ''}
                             <div class="keyword-meta">
                                 <span class="keyword-tag category">${kw.category}</span>
@@ -2934,4 +3118,18 @@
     </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
