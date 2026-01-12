@@ -2852,14 +2852,54 @@
                 return;
             }
 
-            tbody.innerHTML = groupedKeywords.map((group, index) => `
-                <tr>
-                    <td><span class="row-number">${index + 1}</span></td>
-                    <td><span class="keyword-badge keyword-badge-clickable" onclick="openKeywordModal('${group.keyword.replace(/'/g, "\\'")}')">${group.keyword}</span></td>
-                    <td><span class="selection-count ${group.count >= 3 ? 'hot' : group.count >= 2 ? 'warm' : ''}">${group.count} ${group.count === 1 ? 'pick' : 'picks'}</span></td>
-                    <td><span class="timestamp">${group.latestTime}</span></td>
-                </tr>
-            `).join('');
+            // tbody.innerHTML = groupedKeywords.map((group, index) => `
+            //     <tr>
+            //         <td><span class="row-number">${index + 1}</span></td>
+            //         <td><span class="keyword-badge keyword-badge-clickable" onclick="openKeywordModal('${group.keyword.replace(/'/g, "\\'")}')">${group.keyword}</span></td>
+            //         <td><span class="selection-count ${group.count >= 3 ? 'hot' : group.count >= 2 ? 'warm' : ''}">${group.count} ${group.count === 1 ? 'pick' : 'picks'}</span></td>
+            //         <td><span class="timestamp">${group.latestTime}</span></td>
+            //     </tr>
+            // `).join('');
+
+
+
+
+
+            tbody.innerHTML = groupedKeywords.map((group, index) => {
+    // Get unique teams that picked this keyword
+    const teamsSelected = [...new Set(
+        selections
+            .filter(s => s.keyword === group.keyword)
+            .map(s => s.team)
+    )];
+
+    // Generate team badges HTML
+    const teamBadgesHTML = teamsSelected.length > 0 ? `
+        <div class="team-badges">
+            ${teamsSelected.map(team => {
+                const badge = getTeamBadge(team);
+                return `<span class="team-badge" style="background: ${badge.color};" title="Selected by ${team}">${badge.abbr}</span>`;
+            }).join('')}
+        </div>
+    ` : '';
+
+    return `
+        <tr>
+            <td><span class="row-number">${index + 1}</span></td>
+            <td>
+                <span class="keyword-badge keyword-badge-clickable" onclick="openKeywordModal('${group.keyword.replace(/'/g, "\\'")}')">
+                    ${group.keyword}
+                </span>
+            </td>
+            <!-- REPLACED COUNT WITH BADGES -->
+            <td>${teamBadgesHTML}</td>
+            <td><span class="timestamp">${group.latestTime}</span></td>
+        </tr>
+    `;
+}).join('');
+
+
+            
         }
 
         function updateStats() {
@@ -3193,5 +3233,6 @@
     </script>
 </body>
 </html>
+
 
 
