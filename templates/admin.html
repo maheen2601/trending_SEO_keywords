@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Keyword Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Source+Code+Pro:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-tertiary: #1a1a24;
+            --bg-hover: #252530;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0b0;
+            --text-muted: #6c6c7c;
+            --border-color: #2a2a3a;
+            --accent-primary: #00d4aa;
+            --accent-secondary: #00a884;
+            --accent-warning: #f0b429;
+            --accent-danger: #e74c3c;
+            --accent-info: #3498db;
+            --shadow-color: rgba(0, 0, 0, 0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #f5f7fa;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #e8ecf1;
+            --bg-hover: #d0d7e0;
+            --text-primary: #1a1a2e;
+            --text-secondary: #4a4a5a;
+            --text-muted: #8a8a9a;
+            --border-color: #d0d5dd;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* Login Screen */
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .login-box {
+            background: var(--bg-secondary);
+            padding: 3rem;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .login-box h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--accent-primary);
+        }
+
+        .login-box p {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .login-box input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+
+        .login-box input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        .login-box button {
+            width: 100%;
+            padding: 0.75rem;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .login-box button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 212, 170, 0.3);
+        }
+
+        .login-error {
+            color: var(--accent-danger);
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        /* Main Dashboard */
+        .dashboard {
+            display: none;
+        }
+
+        .dashboard.active {
+            display: block;
+        }
+
+        /* Header */
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .header h1 {
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .header h1 span {
+            color: var(--accent-primary);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .admin-badge {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .back-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: background 0.2s;
+        }
+
+        .back-btn:hover {
+            background: var(--bg-hover);
+        }
+
+        .theme-toggle {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 0.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Filters */
+        .filters-row {
+            background: var(--bg-secondary);
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filter-group label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .filter-group input,
+        .filter-group select {
+            padding: 0.5rem 0.75rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        .filter-group input:focus,
+        .filter-group select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        .apply-btn {
+            background: var(--accent-primary);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        .apply-btn:hover {
+            background: var(--accent-secondary);
+        }
+
+        .clear-btn {
+            background: transparent;
+            color: var(--accent-danger);
+            border: 1px solid var(--accent-danger);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .clear-btn:hover {
+            background: var(--accent-danger);
+            color: white;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .stat-card .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-card .stat-icon.blue { background: rgba(52, 152, 219, 0.15); }
+        .stat-card .stat-icon.green { background: rgba(0, 212, 170, 0.15); }
+        .stat-card .stat-icon.orange { background: rgba(240, 180, 41, 0.15); }
+        .stat-card .stat-icon.purple { background: rgba(155, 89, 182, 0.15); }
+
+        .stat-card .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-card .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .stat-card.clickable {
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .stat-card.clickable:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px var(--shadow-color);
+            border-color: var(--accent-primary);
+        }
+
+        /* Charts Section */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card {
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .chart-card h3 {
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 250px;
+        }
+
+        /* Users Table */
+        .users-section {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-header h2 {
+            font-size: 1.1rem;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--bg-tertiary);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .search-box input {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            width: 200px;
+        }
+
+        .search-box input:focus {
+            outline: none;
+        }
+
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .users-table th,
+        .users-table td {
+            padding: 1rem 1.5rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .users-table th {
+            background: var(--bg-tertiary);
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .users-table tr:hover {
+            background: var(--bg-hover);
+            cursor: pointer;
+        }
+
+        .users-table .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .users-table .avatar {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: white;
+            font-size: 0.85rem;
+        }
+
+        .team-tag {
+            background: var(--bg-tertiary);
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            color: var(--accent-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .admin-tag {
+            background: rgba(0, 212, 170, 0.15);
+            color: var(--accent-primary);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .selection-count {
+            font-weight: 600;
+            color: var(--accent-primary);
+        }
+
+        /* User Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            width: 90%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .modal-close {
+            background: var(--bg-tertiary);
+            border: none;
+            color: var(--text-primary);
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            background: var(--bg-hover);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .user-detail-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .user-detail-stat {
+            background: var(--bg-tertiary);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .user-detail-stat .value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+        }
+
+        .user-detail-stat .label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .selections-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .selection-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .selection-item:last-child {
+            border-bottom: none;
+        }
+
+        .selection-keyword {
+            font-weight: 500;
+        }
+
+        .selection-time {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--accent-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .filters-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filter-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .users-table th,
+            .users-table td {
+                padding: 0.75rem;
+            }
+
+            .user-detail-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div class="login-overlay" id="loginOverlay">
+        <div class="login-box">
+            <h1>🔐 Admin Login</h1>
+            <p>Enter your credentials to access the admin dashboard</p>
+            <input type="text" id="adminUsername" placeholder="Username" autocomplete="username">
+            <input type="password" id="adminPassword" placeholder="Password" autocomplete="current-password">
+            <button onclick="adminLogin()">Login</button>
+            <div class="login-error" id="loginError"></div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div class="dashboard" id="dashboard">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1>📊 <span>Admin</span> Dashboard</h1>
+                <span class="admin-badge">ADMIN</span>
+            </div>
+            <div class="header-right">
+                <span id="adminName" style="color: var(--text-secondary);"></span>
+                <button class="back-btn" onclick="goBack()">← Back to App</button>
+                <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme">🌓</button>
+            </div>
+        </header>
+
+        <div class="container">
+            <!-- Filters -->
+            <div class="filters-row">
+                <div class="filter-group">
+                    <label>📅 From:</label>
+                    <input type="date" id="filterFromDate">
+                </div>
+                <div class="filter-group">
+                    <label>📅 To:</label>
+                    <input type="date" id="filterToDate">
+                </div>
+                <div class="filter-group">
+                    <label>👥 Team:</label>
+                    <select id="filterTeam">
+                        <option value="">All Teams</option>
+                        <!-- ADD MORE TEAMS HERE -->
+                        <option value="Data">Data</option>
+                        <option value="GEO">GEO</option>
+                        <option value="The News">The News</option>
+                        <option value="Jang">Jang</option>
+                        <option value="TCP">TCP</option>
+                        <option value="GadInsider">GadInsider</option>
+                        <option value="Gossip Herald">Gossip Herald</option>
+                        <option value="Hungama">Hungama</option>
+                        <option value="SEO">SEO</option>
+
+                        <!-- ADD NEW TEAMS ABOVE THIS LINE -->
+                    </select>
+                </div>
+                <button class="apply-btn" onclick="applyFilters()">Apply Filters</button>
+                <button class="clear-btn" onclick="clearFilters()">✕ Clear Filters</button>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon blue">👥</div>
+                    <div class="stat-value" id="totalUsers">0</div>
+                    <div class="stat-label">Total Users</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green">✅</div>
+                    <div class="stat-value" id="totalSelections">0</div>
+                    <div class="stat-label">Total Selections</div>
+                </div>
+                <div class="stat-card clickable" onclick="openTodaySelectionsModal()">
+                    <div class="stat-icon orange">📈</div>
+                    <div class="stat-value" id="todaySelections">0</div>
+                    <div class="stat-label">Today's Selections</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon purple">🏆</div>
+                    <div class="stat-value" id="topUserName">-</div>
+                    <div class="stat-label">Top User</div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <h3>📊 Selections by Team</h3>
+                    <div class="chart-container">
+                        <canvas id="teamChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <h3>📈 Daily Selection Trend</h3>
+                    <div class="chart-container">
+                        <canvas id="dailyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Keywords -->
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <h3>🔥 Top 10 Keywords</h3>
+                    <div class="chart-container">
+                        <canvas id="keywordsChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <h3>🏅 Top 10 Users</h3>
+                    <div class="chart-container">
+                        <canvas id="usersChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Users Table -->
+            <div class="users-section">
+                <div class="section-header">
+                    <h2>👥 All Users</h2>
+                    <div class="search-box">
+                        <span>🔍</span>
+                        <input type="text" id="userSearch" placeholder="Search users..." oninput="filterUsers()">
+                    </div>
+                </div>
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Team</th>
+                            <th>Selections</th>
+                            <th>Last Active</th>
+                            <th>Joined</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <tr>
+                            <td colspan="5" class="loading">
+                                <div class="spinner"></div>
+                                Loading users...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Detail Modal -->
+    <div class="modal-overlay" id="userModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>
+                    <span id="modalUserAvatar" class="avatar">U</span>
+                    <span id="modalUserName">User Details</span>
+                </h2>
+                <button class="modal-close" onclick="closeUserModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="user-detail-stats">
+                    <div class="user-detail-stat">
+                        <div class="value" id="modalTotalSelections">0</div>
+                        <div class="label">Total Selections</div>
+                    </div>
+                    <div class="user-detail-stat">
+                        <div class="value" id="modalTeam">-</div>
+                        <div class="label">Team</div>
+                    </div>
+                    <div class="user-detail-stat">
+                        <div class="value" id="modalJoined">-</div>
+                        <div class="label">Joined</div>
+                    </div>
+                </div>
+                
+                <h3 style="margin-bottom: 1rem; color: var(--text-secondary);">Selection History</h3>
+                <div class="selections-list" id="modalSelectionsList">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        Loading selections...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Today's Selections Modal -->
+    <div class="modal-overlay" id="todayModal">
+        <div class="modal" style="max-width: 900px;">
+            <div class="modal-header">
+                <h2>📈 Today's Selections</h2>
+                <button class="modal-close" onclick="closeTodayModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="user-detail-stats" style="margin-bottom: 1.5rem;">
+                    <div class="user-detail-stat">
+                        <div class="value" id="todayTotalCount">0</div>
+                        <div class="label">Total Selections</div>
+                    </div>
+                    <div class="user-detail-stat">
+                        <div class="value" id="todayUniqueUsers">0</div>
+                        <div class="label">Unique Users</div>
+                    </div>
+                    <div class="user-detail-stat">
+                        <div class="value" id="todayUniqueKeywords">0</div>
+                        <div class="label">Unique Keywords</div>
+                    </div>
+                </div>
+                
+                <div class="today-filters" style="margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center;">
+                    <div class="search-box" style="flex: 1;">
+                        <span>🔍</span>
+                        <input type="text" id="todaySearch" placeholder="Search user or keyword..." oninput="filterTodaySelections()">
+                    </div>
+                    <select id="todayTeamFilter" onchange="filterTodaySelections()" style="padding: 0.5rem; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-primary);">
+                        <option value="">All Teams</option>
+                        <!-- Teams will be populated dynamically -->
+                    </select>
+                </div>
+                
+                <div class="today-selections-table" style="max-height: 400px; overflow-y: auto;">
+                    <table class="users-table" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Team</th>
+                                <th>Keyword</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="todaySelectionsBody">
+                            <tr>
+                                <td colspan="4" class="loading">
+                                    <div class="spinner"></div>
+                                    Loading today's selections...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentAdmin = null;
+        let allUsers = [];
+        let statsData = null;
+        let teamChart = null;
+        let dailyChart = null;
+        let keywordsChart = null;
+        let usersChart = null;
+
+        // Theme handling
+        function initTheme() {
+            const savedTheme = localStorage.getItem('admin-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        }
+
+        function toggleTheme() {
+            const current = document.documentElement.getAttribute('data-theme');
+            const newTheme = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('admin-theme', newTheme);
+            
+            // Update charts colors
+            updateChartsTheme();
+        }
+
+        // Check for saved session
+        function checkSession() {
+            const savedAdmin = localStorage.getItem('adminUser');
+            if (savedAdmin) {
+                currentAdmin = JSON.parse(savedAdmin);
+                verifyAdmin(currentAdmin.name);
+            }
+        }
+
+        // Admin Login
+        async function adminLogin() {
+            const username = document.getElementById('adminUsername').value.trim();
+            const password = document.getElementById('adminPassword').value.trim();
+            const errorEl = document.getElementById('loginError');
+            
+            if (!username || !password) {
+                errorEl.textContent = 'Please enter username and password';
+                return;
+            }
+
+            try {
+                // First login
+                const loginRes = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: username, password: password })
+                });
+                const loginData = await loginRes.json();
+                
+                if (!loginData.success) {
+                    errorEl.textContent = loginData.message;
+                    return;
+                }
+
+                // Check if admin
+                const adminRes = await fetch('/api/admin/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: username })
+                });
+                const adminData = await adminRes.json();
+                
+                if (!adminData.is_admin) {
+                    errorEl.textContent = 'Access denied. You are not an admin.';
+                    return;
+                }
+
+                // Success
+                currentAdmin = loginData.user;
+                localStorage.setItem('adminUser', JSON.stringify(currentAdmin));
+                showDashboard();
+                
+            } catch (error) {
+                errorEl.textContent = 'Connection error. Please try again.';
+                console.error(error);
+            }
+        }
+
+        async function verifyAdmin(username) {
+            try {
+                const res = await fetch('/api/admin/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: username })
+                });
+                const data = await res.json();
+                
+                if (data.is_admin) {
+                    showDashboard();
+                } else {
+                    localStorage.removeItem('adminUser');
+                    currentAdmin = null;
+                }
+            } catch (error) {
+                console.error('Verify error:', error);
+            }
+        }
+
+        function showDashboard() {
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('dashboard').classList.add('active');
+            document.getElementById('adminName').textContent = `Welcome, ${currentAdmin.name}`;
+            
+            loadDashboardData();
+        }
+
+        function goBack() {
+            window.location.href = '/';
+        }
+
+        // Load Dashboard Data
+        async function loadDashboardData() {
+            await Promise.all([
+                loadStats(),
+                loadUsers()
+            ]);
+        }
+
+        async function loadStats() {
+            const fromDate = document.getElementById('filterFromDate').value;
+            const toDate = document.getElementById('filterToDate').value;
+            
+            let url = '/api/admin/stats';
+            const params = new URLSearchParams();
+            if (fromDate) params.append('from_date', fromDate);
+            if (toDate) params.append('to_date', toDate);
+            if (params.toString()) url += '?' + params.toString();
+
+            try {
+                const res = await fetch(url);
+                statsData = await res.json();
+                
+                updateStatsCards(statsData);
+                updateCharts(statsData);
+            } catch (error) {
+                console.error('Load stats error:', error);
+            }
+        }
+
+        async function loadUsers() {
+            try {
+                const res = await fetch('/api/admin/users');
+                const data = await res.json();
+                allUsers = data.users || [];
+                renderUsersTable(allUsers);
+            } catch (error) {
+                console.error('Load users error:', error);
+            }
+        }
+
+        function updateStatsCards(stats) {
+            document.getElementById('totalUsers').textContent = stats.total_users || 0;
+            document.getElementById('totalSelections').textContent = stats.total_selections || 0;
+            
+            // Today's selections
+            const today = new Date().toISOString().split('T')[0];
+            const todayStat = stats.daily_stats?.find(d => d.date === today);
+            document.getElementById('todaySelections').textContent = todayStat?.count || 0;
+            
+            // Top user
+            if (stats.top_users && stats.top_users.length > 0) {
+                document.getElementById('topUserName').textContent = stats.top_users[0].username;
+            }
+        }
+
+        function updateCharts(stats) {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const textColor = isDark ? '#a0a0b0' : '#4a4a5a';
+            const gridColor = isDark ? '#2a2a3a' : '#d0d5dd';
+
+            // Team Chart (Doughnut)
+            const teamCtx = document.getElementById('teamChart').getContext('2d');
+            if (teamChart) teamChart.destroy();
+            
+            const teamColors = ['#00d4aa', '#3498db', '#e74c3c', '#f0b429', '#9b59b6', '#1abc9c', '#e91e63', '#27ae60'];
+            teamChart = new Chart(teamCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: stats.team_stats?.map(t => t.team) || [],
+                    datasets: [{
+                        data: stats.team_stats?.map(t => t.count) || [],
+                        backgroundColor: teamColors,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: { color: textColor }
+                        }
+                    }
+                }
+            });
+
+            // Daily Chart (Line)
+            const dailyCtx = document.getElementById('dailyChart').getContext('2d');
+            if (dailyChart) dailyChart.destroy();
+            
+            const sortedDaily = [...(stats.daily_stats || [])].sort((a, b) => a.date.localeCompare(b.date));
+            dailyChart = new Chart(dailyCtx, {
+                type: 'line',
+                data: {
+                    labels: sortedDaily.map(d => d.date.slice(5)), // MM-DD format
+                    datasets: [{
+                        label: 'Selections',
+                        data: sortedDaily.map(d => d.count),
+                        borderColor: '#00d4aa',
+                        backgroundColor: 'rgba(0, 212, 170, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
+                        },
+                        y: {
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
+                        }
+                    }
+                }
+            });
+
+            // Keywords Chart (Bar)
+            const keywordsCtx = document.getElementById('keywordsChart').getContext('2d');
+            if (keywordsChart) keywordsChart.destroy();
+            
+            keywordsChart = new Chart(keywordsCtx, {
+                type: 'bar',
+                data: {
+                    labels: stats.top_keywords?.map(k => k.keyword.length > 20 ? k.keyword.slice(0, 20) + '...' : k.keyword) || [],
+                    datasets: [{
+                        label: 'Selections',
+                        data: stats.top_keywords?.map(k => k.count) || [],
+                        backgroundColor: '#3498db',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
+                        },
+                        y: {
+                            ticks: { color: textColor },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+
+            // Users Chart (Bar)
+            const usersCtx = document.getElementById('usersChart').getContext('2d');
+            if (usersChart) usersChart.destroy();
+            
+            usersChart = new Chart(usersCtx, {
+                type: 'bar',
+                data: {
+                    labels: stats.top_users?.map(u => u.username) || [],
+                    datasets: [{
+                        label: 'Selections',
+                        data: stats.top_users?.map(u => u.count) || [],
+                        backgroundColor: '#00d4aa',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
+                        },
+                        y: {
+                            ticks: { color: textColor },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateChartsTheme() {
+            if (statsData) {
+                updateCharts(statsData);
+            }
+        }
+
+        function renderUsersTable(users) {
+            const tbody = document.getElementById('usersTableBody');
+            const teamFilter = document.getElementById('filterTeam').value;
+            
+            // Apply team filter
+            let filteredUsers = users;
+            if (teamFilter) {
+                filteredUsers = users.filter(u => u.team === teamFilter);
+            }
+            
+            if (filteredUsers.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="empty-state">
+                            <div class="empty-state-icon">👤</div>
+                            No users found
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = filteredUsers.map(user => `
+                <tr onclick="openUserModal('${user.username}')">
+                    <td>
+                        <div class="user-info">
+                            <div class="avatar">${user.username.charAt(0).toUpperCase()}</div>
+                            <div>
+                                <div>${user.username} ${user.is_admin ? '<span class="admin-tag">ADMIN</span>' : ''}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td><span class="team-tag">${user.team}</span></td>
+                    <td><span class="selection-count">${user.total_selections}</span></td>
+                    <td>${user.last_selection || 'Never'}</td>
+                    <td>${user.created_at ? user.created_at.split(' ')[0] : '-'}</td>
+                </tr>
+            `).join('');
+        }
+
+        function filterUsers() {
+            const search = document.getElementById('userSearch').value.toLowerCase();
+            const filtered = allUsers.filter(u => 
+                u.username.toLowerCase().includes(search) ||
+                u.team.toLowerCase().includes(search)
+            );
+            renderUsersTable(filtered);
+        }
+
+        function applyFilters() {
+            loadStats();
+            renderUsersTable(allUsers);
+        }
+
+        function clearFilters() {
+            document.getElementById('filterFromDate').value = '';
+            document.getElementById('filterToDate').value = '';
+            document.getElementById('filterTeam').value = '';
+            document.getElementById('userSearch').value = '';
+            applyFilters();
+        }
+
+        // Today's Selections Modal
+        let todaySelectionsData = [];
+
+        async function openTodaySelectionsModal() {
+            const modal = document.getElementById('todayModal');
+            modal.classList.add('active');
+            
+            const tbody = document.getElementById('todaySelectionsBody');
+            tbody.innerHTML = '<tr><td colspan="4" class="loading"><div class="spinner"></div>Loading today\'s selections...</td></tr>';
+
+            try {
+                const res = await fetch('/api/admin/today-selections');
+                const data = await res.json();
+                
+                todaySelectionsData = data.selections || [];
+                
+                // Update stats
+                document.getElementById('todayTotalCount').textContent = data.total || 0;
+                document.getElementById('todayUniqueUsers').textContent = data.unique_users || 0;
+                document.getElementById('todayUniqueKeywords').textContent = data.unique_keywords || 0;
+                
+                // Populate team filter
+                const teams = [...new Set(todaySelectionsData.map(s => s.team))];
+                const teamFilter = document.getElementById('todayTeamFilter');
+                teamFilter.innerHTML = '<option value="">All Teams</option>' + 
+                    teams.map(t => `<option value="${t}">${t}</option>`).join('');
+                
+                renderTodaySelections(todaySelectionsData);
+            } catch (error) {
+                console.error('Load today selections error:', error);
+                tbody.innerHTML = '<tr><td colspan="4" class="empty-state">Error loading selections</td></tr>';
+            }
+        }
+
+        function renderTodaySelections(selections) {
+            const tbody = document.getElementById('todaySelectionsBody');
+            
+            if (selections.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="empty-state"><div class="empty-state-icon">📭</div>No selections today</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = selections.map(s => `
+                <tr>
+                    <td>
+                        <div class="user-info">
+                            <div class="avatar">${s.user.charAt(0).toUpperCase()}</div>
+                            <span>${s.user}</span>
+                        </div>
+                    </td>
+                    <td><span class="team-tag">${s.team}</span></td>
+                    <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${s.keyword}">${s.keyword}</td>
+                    <td style="color: var(--text-secondary); font-size: 0.85rem;">${s.timestamp}</td>
+                </tr>
+            `).join('');
+        }
+
+        function filterTodaySelections() {
+            const search = document.getElementById('todaySearch').value.toLowerCase();
+            const team = document.getElementById('todayTeamFilter').value;
+            
+            
+            let filtered = todaySelectionsData;
+            
+            if (search) {
+                filtered = filtered.filter(s => 
+                    s.user.toLowerCase().includes(search) ||
+                    s.keyword.toLowerCase().includes(search)
+                );
+            }
+            
+            if (team) {
+                filtered = filtered.filter(s => s.team === team);
+            }
+            
+            renderTodaySelections(filtered);
+        }
+
+        function closeTodayModal() {
+            document.getElementById('todayModal').classList.remove('active');
+            document.getElementById('todaySearch').value = '';
+            document.getElementById('todayTeamFilter').value = '';
+        }
+
+        // User Modal
+        async function openUserModal(username) {
+            const modal = document.getElementById('userModal');
+            modal.classList.add('active');
+            
+            // Find user in list
+            const user = allUsers.find(u => u.username === username);
+            if (user) {
+                document.getElementById('modalUserAvatar').textContent = username.charAt(0).toUpperCase();
+                document.getElementById('modalUserName').textContent = username;
+                document.getElementById('modalTeam').textContent = user.team;
+                document.getElementById('modalTotalSelections').textContent = user.total_selections;
+                document.getElementById('modalJoined').textContent = user.created_at ? user.created_at.split(' ')[0] : '-';
+            }
+
+            // Load selections
+            const listEl = document.getElementById('modalSelectionsList');
+            listEl.innerHTML = '<div class="loading"><div class="spinner"></div>Loading selections...</div>';
+
+            try {
+                const fromDate = document.getElementById('filterFromDate').value;
+                const toDate = document.getElementById('filterToDate').value;
+                
+                
+                let url = `/api/admin/user/${encodeURIComponent(username)}/selections`;
+                const params = new URLSearchParams();
+                if (fromDate) params.append('from_date', fromDate);
+                if (toDate) params.append('to_date', toDate);
+                if (params.toString()) url += '?' + params.toString();
+
+                const res = await fetch(url);
+                const data = await res.json();
+                
+                if (data.selections && data.selections.length > 0) {
+                    listEl.innerHTML = data.selections.map(s => `
+                        <div class="selection-item">
+                            <span class="selection-keyword">${s.keyword}</span>
+                            <span class="selection-time">${s.timestamp}</span>
+                        </div>
+                    `).join('');
+                } else {
+                    listEl.innerHTML = '<div class="empty-state">No selections found</div>';
+                }
+            } catch (error) {
+                listEl.innerHTML = '<div class="empty-state">Error loading selections</div>';
+            }
+        }
+
+        function closeUserModal() {
+            document.getElementById('userModal').classList.remove('active');
+        }
+
+        // Close modal on outside click
+        document.getElementById('userModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeUserModal();
+            }
+        });
+
+        document.getElementById('todayModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeTodayModal();
+            }
+        });
+
+        // Enter key for login
+        document.getElementById('adminPassword').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') adminLogin();
+        });
+
+        // Initialize
+        initTheme();
+        checkSession();
+    </script>
+</body>
+</html>
+
