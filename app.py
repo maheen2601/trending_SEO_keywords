@@ -74,15 +74,27 @@ def init_database():
         conn = get_db_connection()
         cur = conn.cursor()
         
-        # Create users table
+        # Create users table with is_admin column
         cur.execute("""
             CREATE TABLE IF NOT EXISTS app_users (
                 id SERIAL PRIMARY KEY,
                 username TEXT UNIQUE NOT NULL,
                 team TEXT NOT NULL,
                 password_hash TEXT NOT NULL,
+                is_admin BOOLEAN DEFAULT FALSE,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
+        """)
+        
+        # Add is_admin column if it doesn't exist (for existing databases)
+        cur.execute("""
+            DO $$ 
+            BEGIN 
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                              WHERE table_name='app_users' AND column_name='is_admin') THEN
+                    ALTER TABLE app_users ADD COLUMN is_admin BOOLEAN DEFAULT FALSE;
+                END IF;
+            END $$;
         """)
         
         # Create selections table
@@ -144,7 +156,7 @@ def db_login_user(username, password):
         cur = conn.cursor()
         
         cur.execute(
-            "SELECT username, team, password_hash FROM app_users WHERE username = %s",
+            "SELECT username, team, password_hash, COALESCE(is_admin, FALSE) FROM app_users WHERE username = %s",
             (username,)
         )
         user = cur.fetchone()
@@ -157,7 +169,7 @@ def db_login_user(username, password):
         
         return {
             "success": True,
-            "user": {"name": user[0], "team": user[1]}
+            "user": {"name": user[0], "team": user[1], "is_admin": user[3]}
         }
         
     except Exception as e:
@@ -348,6 +360,234 @@ def load_selections_cache():
     cache_loaded = True
     print(f"[Cache] Loaded {len(selections_cache)} selections")
 
+# ------------------ Admin Database Functions ------------------
+def db_get_all_users():
+    """Get all users with their stats"""
+    conn = None
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        cur.execute("""
+            SELECT 
+                u.id,
+                u.username, 
+                u.team, 
+                COALESCE(u.is_admin, FALSE) as is_admin,
+                u.created_at,
+                COUNT(ks.id) as total_selections,
+                MAX(ks.selected_at) as last_selection
+            FROM app_users u
+            LEFT JOIN keyword_selections ks ON u.username = ks.username
+            GROUP BY u.id, u.username, u.team, u.is_admin, u.created_at
+            ORDER BY total_selections DESC
+        """)
+        rows = cur.fetchall()
+        
+        users = []
+        for row in rows:
+            users.append({
+                "id": row[0],
+                "username": row[1],
+                "team": row[2],
+                "is_admin": row[3],
+                "created_at": to_pakistan_time(row[4]) if row[4] else None,
+                "total_selections": row[5],
+                "last_selection": to_pakistan_time(row[6]) if row[6] else None
+            })
+        return users
+        
+    except Exception as e:
+        print(f"[DB] Get all users error: {e}")
+        return []
+    finally:
+        if conn:
+            cur.close()
+            conn.close()
+
+def db_get_user_selections(username, from_date=None, to_date=None):
+    """Get all selections for a specific user with optional date filter"""
+    conn = None
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        query = """
+            SELECT keyword, team, selected_at 
+            FROM keyword_selections 
+            WHERE username = %s
+        """
+        params = [username]
+        
+        if from_date:
+            query += " AND selected_at >= %s"
+            params.append(from_date)
+        if to_date:
+            query += " AND selected_at <= %s"
+            params.append(to_date + " 23:59:59")
+        
+        query += " ORDER BY selected_at DESC"
+        
+        cur.execute(query, params)
+        rows = cur.fetchall()
+        
+        selections = []
+        for row in rows:
+            selections.append({
+                "keyword": row[0],
+                "team": row[1],
+                "timestamp": to_pakistan_time(row[2])
+            })
+        return selections
+        
+    except Exception as e:
+        print(f"[DB] Get user selections error: {e}")
+        return []
+    finally:
+        if conn:
+            cur.close()
+            conn.close()
+
+def db_get_admin_stats(from_date=None, to_date=None):
+    """Get overall statistics for admin dashboard"""
+    conn = None
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        # Base date filter
+        date_filter = ""
+        params = []
+        if from_date:
+            date_filter += " AND selected_at >= %s"
+            params.append(from_date)
+        if to_date:
+            date_filter += " AND selected_at <= %s"
+            params.append(to_date + " 23:59:59")
+        
+        # Total users
+        cur.execute("SELECT COUNT(*) FROM app_users")
+        total_users = cur.fetchone()[0]
+        
+        # Total selections (with date filter)
+        cur.execute(f"SELECT COUNT(*) FROM keyword_selections WHERE 1=1 {date_filter}", params)
+        total_selections = cur.fetchone()[0]
+        
+        # Selections by team (with date filter)
+        cur.execute(f"""
+            SELECT team, COUNT(*) as count 
+            FROM keyword_selections 
+            WHERE 1=1 {date_filter}
+            GROUP BY team 
+            ORDER BY count DESC
+        """, params)
+        team_stats = [{"team": row[0], "count": row[1]} for row in cur.fetchall()]
+        
+        # Selections by date (last 30 days)
+        cur.execute(f"""
+            SELECT DATE(selected_at) as date, COUNT(*) as count 
+            FROM keyword_selections 
+            WHERE selected_at >= CURRENT_DATE - INTERVAL '30 days' {date_filter}
+            GROUP BY DATE(selected_at) 
+            ORDER BY date DESC
+            LIMIT 30
+        """, params)
+        daily_stats = [{"date": str(row[0]), "count": row[1]} for row in cur.fetchall()]
+        
+        # Top users (with date filter)
+        cur.execute(f"""
+            SELECT username, team, COUNT(*) as count 
+            FROM keyword_selections 
+            WHERE 1=1 {date_filter}
+            GROUP BY username, team 
+            ORDER BY count DESC 
+            LIMIT 10
+        """, params)
+        top_users = [{"username": row[0], "team": row[1], "count": row[2]} for row in cur.fetchall()]
+        
+        # Most selected keywords (with date filter)
+        cur.execute(f"""
+            SELECT keyword, COUNT(*) as count 
+            FROM keyword_selections 
+            WHERE 1=1 {date_filter}
+            GROUP BY keyword 
+            ORDER BY count DESC 
+            LIMIT 10
+        """, params)
+        top_keywords = [{"keyword": row[0], "count": row[1]} for row in cur.fetchall()]
+        
+        return {
+            "total_users": total_users,
+            "total_selections": total_selections,
+            "team_stats": team_stats,
+            "daily_stats": daily_stats,
+            "top_users": top_users,
+            "top_keywords": top_keywords
+        }
+        
+    except Exception as e:
+        print(f"[DB] Get admin stats error: {e}")
+        return {
+            "total_users": 0,
+            "total_selections": 0,
+            "team_stats": [],
+            "daily_stats": [],
+            "top_users": [],
+            "top_keywords": []
+        }
+    finally:
+        if conn:
+            cur.close()
+            conn.close()
+
+def db_set_admin(username, is_admin=True):
+    """Set or remove admin status for a user"""
+    conn = None
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        cur.execute(
+            "UPDATE app_users SET is_admin = %s WHERE username = %s RETURNING username",
+            (is_admin, username)
+        )
+        result = cur.fetchone()
+        conn.commit()
+        
+        if result:
+            return {"success": True, "message": f"Admin status {'granted' if is_admin else 'revoked'} for {username}"}
+        return {"success": False, "message": "User not found"}
+        
+    except Exception as e:
+        print(f"[DB] Set admin error: {e}")
+        return {"success": False, "message": "Database error"}
+    finally:
+        if conn:
+            cur.close()
+            conn.close()
+
+def db_check_admin(username):
+    """Check if user is admin"""
+    conn = None
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        cur.execute(
+            "SELECT COALESCE(is_admin, FALSE) FROM app_users WHERE username = %s",
+            (username,)
+        )
+        result = cur.fetchone()
+        return result[0] if result else False
+        
+    except Exception as e:
+        print(f"[DB] Check admin error: {e}")
+        return False
+    finally:
+        if conn:
+            cur.close()
+            conn.close()
+
 # ------------------ Google Sheets Function ------------------
 def get_google_sheet_data():
     """Fetch keywords from Google Sheet with all columns"""
@@ -359,11 +599,9 @@ def get_google_sheet_data():
             "https://www.googleapis.com/auth/drive"
         ]
         
-        # print(f"[SHEET] Checking for credentials file: {CREDENTIALS_FILE}", flush=True)
-        # print(f"[SHEET] Credentials file exists: {os.path.exists(CREDENTIALS_FILE)}", flush=True)
+        print(f"[SHEET] Checking for credentials file: {CREDS_FILE}", flush=True)
+        print(f"[SHEET] Credentials file exists: {os.path.exists(CREDS_FILE)}", flush=True)
         
-        # if not os.path.exists(CREDENTIALS_FILE):
-        # if not os.path.exists(GOOGLE_CREDENTIALS_JSON):
         if not CREDS_FILE or not os.path.exists(CREDS_FILE):
             # Sample data with separate date and time columns
             return [
@@ -375,8 +613,7 @@ def get_google_sheet_data():
             ]
         
         print("[SHEET] Loading credentials...", flush=True)
-        # creds = ServiceAccountCredentials.from_json_keyfile_name(CREDENTIALS_FILE, scope)
-        creds = ServiceAccountCredentials.from_json_keyfile_name(CREDS_FILE, scope)    
+        creds = ServiceAccountCredentials.from_json_keyfile_name(CREDS_FILE, scope)
         print("[SHEET] Authorizing with Google...", flush=True)
         client = gspread.authorize(creds)
         print(f"[SHEET] Opening sheet with ID: {SHEET_ID}", flush=True)
@@ -556,6 +793,116 @@ def get_keyword_details(keyword):
             cur.close()
             conn.close()
 
+# ------------------ Admin Routes ------------------
+@app.route('/admin')
+def admin_page():
+    """Render admin dashboard page"""
+    return render_template('admin.html')
+
+@app.route('/api/admin/verify', methods=['POST'])
+def verify_admin():
+    """Verify if current user is admin"""
+    data = request.json
+    username = data.get('username', '')
+    
+    is_admin = db_check_admin(username)
+    return jsonify({"is_admin": is_admin})
+
+@app.route('/api/admin/stats', methods=['GET'])
+def get_admin_stats():
+    """Get admin dashboard statistics"""
+    # Get query parameters for date filtering
+    from_date = request.args.get('from_date')
+    to_date = request.args.get('to_date')
+    
+    stats = db_get_admin_stats(from_date, to_date)
+    return jsonify(stats)
+
+@app.route('/api/admin/users', methods=['GET'])
+def get_all_users():
+    """Get all users with their stats"""
+    users = db_get_all_users()
+    return jsonify({"users": users})
+
+@app.route('/api/admin/user/<username>/selections', methods=['GET'])
+def get_user_selections(username):
+    """Get selections for a specific user"""
+    from_date = request.args.get('from_date')
+    to_date = request.args.get('to_date')
+    
+    selections = db_get_user_selections(username, from_date, to_date)
+    return jsonify({
+        "username": username,
+        "selections": selections,
+        "total": len(selections)
+    })
+
+@app.route('/api/admin/set-admin', methods=['POST'])
+def set_user_admin():
+    """Set or remove admin status for a user"""
+    data = request.json
+    requester = data.get('requester', '')
+    target_user = data.get('username', '')
+    is_admin = data.get('is_admin', False)
+    
+    # Verify requester is admin
+    if not db_check_admin(requester):
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+    
+    result = db_set_admin(target_user, is_admin)
+    return jsonify(result)
+
+@app.route('/api/admin/today-selections', methods=['GET'])
+def get_today_selections():
+    """Get all selections made today"""
+    conn = None
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        # Get today's selections
+        cur.execute("""
+            SELECT username, team, keyword, selected_at 
+            FROM keyword_selections 
+            WHERE DATE(selected_at) = CURRENT_DATE
+            ORDER BY selected_at DESC
+        """)
+        rows = cur.fetchall()
+        
+        selections = []
+        unique_users = set()
+        unique_keywords = set()
+        
+        for row in rows:
+            selections.append({
+                "user": row[0],
+                "team": row[1],
+                "keyword": row[2],
+                "timestamp": to_pakistan_time(row[3])
+            })
+            unique_users.add(row[0])
+            unique_keywords.add(row[2])
+        
+        return jsonify({
+            "selections": selections,
+            "total": len(selections),
+            "unique_users": len(unique_users),
+            "unique_keywords": len(unique_keywords)
+        })
+        
+    except Exception as e:
+        print(f"[DB] Get today selections error: {e}")
+        return jsonify({
+            "selections": [],
+            "total": 0,
+            "unique_users": 0,
+            "unique_keywords": 0
+        })
+    finally:
+        if conn:
+            cur.close()
+            conn.close()
+
 # ------------------ WebSocket Events ------------------
 @socketio.on('connect')
 def handle_connect():
@@ -619,5 +966,4 @@ if __name__ == '__main__':
     
     print("Starting Keyword Selection App...")
     print("Open http://localhost:5000 in your browser")
-    # socketio.run(app, debug=True, host='0.0.0.0', port=5000)
-    socketio.run(app, host='0.0.0.0', port=10000, debug=False)
+    socketio.run(app, debug=True, host='0.0.0.0', port=5000)
