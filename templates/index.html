@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1500,7 +1500,7 @@
     </style>
 </head>
 <body>
-    <!-- Header -->
+
     <header class="header">
         <div class="logo">SEO Suggested Keywords</div>
         <div class="header-actions">
@@ -1534,10 +1534,10 @@
         </div>
     </header>
 
-    <!-- Auth Section -->
+
     <div class="auth-container" id="authSection">
         <div class="auth-card">
-            <!-- Login Form -->
+           
             <div id="loginForm">
                 <h2>Welcome Back</h2>
                 <p>Sign in to continue to the dashboard</p>
@@ -1576,7 +1576,6 @@
                 <p class="error-msg" id="loginError"></p>
             </div>
 
-            <!-- Forgot Password Form -->
             <div id="forgotPasswordForm" class="hidden">
                 <h2>Reset Password</h2>
                 <p>Enter your username and team to verify identity</p>
@@ -1618,7 +1617,7 @@
                 <p class="success-msg" id="resetSuccess"></p>
             </div>
 
-            <!-- Register Form -->
+           
             <div id="registerForm" class="hidden">
                 <h2>Create Account</h2>
                 <p>Register to start selecting keywords</p>
@@ -1670,11 +1669,11 @@
         </div>
     </div>
 
-    <!-- Dashboard Section -->
+
     <div class="container dashboard" id="dashboard">
-        <!-- Keywords Section - Redesigned -->
+        
         <section class="keywords-section">
-            <!-- Search Bar - Prominent at top -->
+            
             <div class="search-hero">
                 <div class="search-container">
                     <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1686,7 +1685,7 @@
                 </div>
             </div>
 
-            <!-- Filters Row -->
+            
             <div class="filters-row">
                 <div class="filters-left">
                     <div class="filter-chip-group">
@@ -1724,7 +1723,7 @@
                 </div>
             </div>
 
-            <!-- Stats Cards - Filter-aware with new design -->
+         
             <div class="stats-row">
                 <div class="stat-card-new">
                     <div class="stat-icon-box blue">📊</div>
@@ -1755,25 +1754,25 @@
                     </div>
                 </div>
             </div>
-            <!-- Hidden element to track total for internal use -->
+        
             <span id="totalCount" style="display:none;">0</span>
             
-            <!-- Keywords Grid -->
+          
             <div class="keywords-grid" id="keywordsGrid">
-                <!-- Keywords will be loaded here -->
+               
             </div>
             
-            <!-- Pagination Controls -->
+      
             <div class="pagination-container" id="keywordsPagination">
-                <!-- Pagination will be rendered here -->
+          
             </div>
         </section>
 
-        <!-- Selections Table -->
+
         <section class="selections-section">
             <h2 class="section-title">Picked Keywords</h2>
             
-            <!-- Selections Filter Bar -->
+         
             <div class="filter-bar">
                 <div class="filter-group">
                     <label>From:</label>
@@ -1825,13 +1824,13 @@
         </section>
     </div>
 
-    <!-- Toast Notification -->
+
     <div class="toast" id="toast">
         <span class="toast-icon">✨</span>
         <span class="toast-message" id="toastMessage">Notification</span>
     </div>
 
-    <!-- Stats Details Modal -->
+
     <div class="modal-overlay" id="statsModal" onclick="closeStatsModal(event)">
         <div class="modal" onclick="event.stopPropagation()">
             <div class="modal-header">
@@ -1851,12 +1850,12 @@
                 </div>
             </div>
             <div class="stats-modal-list" id="statsModalList">
-                <!-- Stats list will be populated here -->
+    
             </div>
         </div>
     </div>
 
-    <!-- Keyword Details Modal -->
+
     <div class="modal-overlay" id="keywordModal" onclick="closeModal(event)">
         <div class="modal" onclick="event.stopPropagation()">
             <div class="modal-header">
@@ -1876,7 +1875,7 @@
                 </div>
             </div>
             
-            <!-- Modal Filters -->
+      
             <div class="filter-bar" style="margin-bottom: 1rem;">
                 <div class="filter-group">
                     <label>From:</label>
@@ -1900,7 +1899,7 @@
             </div>
             
             <div class="modal-users-list" id="modalUsersList">
-                <!-- Users will be loaded here -->
+        
             </div>
         </div>
     </div>
@@ -2891,7 +2890,7 @@
                     ${group.keyword}
                 </span>
             </td>
-            <!-- REPLACED COUNT WITH BADGES -->
+           
             <td>${teamBadgesHTML}</td>
             <td><span class="timestamp">${group.latestTime}</span></td>
         </tr>
@@ -3236,3 +3235,3498 @@
 
 
 
+ -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEO suggested Keywords</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.min.js"></script>
+    <style>
+        :root {
+            /* Light Theme - Soft & Professional */
+            --bg-primary: #f0f4f8;
+            --bg-secondary: #e2e8f0;
+            --bg-card: #ffffff;
+            --bg-hover: #edf2f7;
+            --accent-primary: #3182ce;
+            --accent-secondary: #2b6cb0;
+            --accent-glow: rgba(49, 130, 206, 0.2);
+            --text-primary: #1a202c;
+            --text-secondary: #4a5568;
+            --text-muted: #718096;
+            --border-color: #cbd5e0;
+            --error: #e53e3e;
+            --success: #38a169;
+            --warning: #d69e2e;
+        }
+
+        /* Dark Theme */
+        [data-theme="dark"] {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: #1e293b;
+            --bg-hover: #334155;
+            --accent-primary: #60a5fa;
+            --accent-secondary: #3b82f6;
+            --accent-glow: rgba(96, 165, 250, 0.25);
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --error: #f87171;
+            --success: #4ade80;
+            --warning: #fbbf24;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(ellipse at top left, rgba(49, 130, 206, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at bottom right, rgba(56, 161, 105, 0.05) 0%, transparent 50%);
+        }
+
+        /* Header */
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .theme-toggle {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 0.6rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            background: var(--bg-hover);
+            color: var(--accent-primary);
+            border-color: var(--accent-primary);
+            transform: scale(1.05);
+        }
+
+        .theme-toggle svg {
+            width: 22px;
+            height: 22px;
+        }
+
+        .logo::before {
+            content: '◈';
+            font-size: 1.8rem;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-badge {
+            background: var(--bg-card);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .user-badge .name {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .user-badge .team {
+            color: var(--accent-primary);
+            font-size: 0.85rem;
+        }
+
+        .online-indicator {
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: var(--accent-primary);
+            color: var(--bg-primary);
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px var(--accent-glow);
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-hover);
+            border-color: var(--accent-primary);
+        }
+
+        .btn-danger {
+            background: transparent;
+            color: var(--error);
+            border: 1px solid var(--error);
+        }
+
+        .btn-danger:hover {
+            background: var(--error);
+            color: white;
+        }
+
+        .btn-admin {
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+            color: white;
+            border: none;
+            font-weight: 600;
+        }
+
+        .btn-admin:hover {
+            background: linear-gradient(135deg, #8e44ad, #7d3c98);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(155, 89, 182, 0.3);
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Auth Section */
+        .auth-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: calc(100vh - 100px);
+        }
+
+        .auth-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 3rem;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .auth-card h2 {
+            text-align: center;
+            margin-bottom: 0.5rem;
+            font-size: 1.8rem;
+        }
+
+        .auth-card p {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.9rem 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .form-group select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            padding-right: 2.5rem;
+        }
+
+        .form-group select option {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            padding: 0.5rem;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .form-group input::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* Password toggle styles */
+        .password-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .password-wrapper input {
+            padding-right: 45px;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            transition: color 0.2s ease;
+        }
+
+        .password-toggle:hover {
+            color: var(--accent-primary);
+        }
+
+        .password-toggle svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .auth-card .btn {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1rem;
+            margin-top: 1rem;
+        }
+
+        .auth-toggle {
+            text-align: center;
+            margin-top: 1.5rem;
+            color: var(--text-secondary);
+        }
+
+        .auth-toggle a {
+            color: var(--accent-primary);
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .auth-toggle a:hover {
+            text-decoration: underline;
+        }
+
+        .error-msg {
+            color: var(--error);
+            text-align: center;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .success-msg {
+            color: var(--success);
+            text-align: center;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        /* Dashboard */
+        .dashboard {
+            display: none;
+        }
+
+        .dashboard.active {
+            display: block;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: var(--accent-primary);
+            border-radius: 2px;
+        }
+
+        /* Keywords Section - Redesigned */
+        .keywords-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Search Hero */
+        .search-hero {
+            margin-bottom: 1.25rem;
+        }
+
+        .search-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            width: 22px;
+            height: 22px;
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 1rem 3rem 1rem 3rem;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 14px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 4px var(--accent-glow);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .search-clear {
+            position: absolute;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0.25rem;
+            font-size: 1rem;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+
+        .search-clear:hover {
+            opacity: 1;
+            color: var(--error);
+        }
+
+        /* Filters Row */
+        .filters-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .filters-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .filters-right {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .filter-chip-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-chip {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--bg-secondary);
+            padding: 0.4rem 0.75rem;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        .filter-chip label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .chip-input {
+            padding: 0.35rem 0.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.85rem;
+            min-width: 110px;
+        }
+
+        .chip-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        .clear-filters-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.5rem 0.75rem;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .clear-filters-btn:hover {
+            background: var(--bg-secondary);
+            color: var(--error);
+            border-color: var(--error);
+        }
+
+        .auto-refresh-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            background: var(--bg-secondary);
+            padding: 0.4rem 0.75rem;
+            border-radius: 20px;
+        }
+
+        .refresh-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse-dot 2s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+        }
+
+        .last-refresh-time {
+            color: var(--text-muted);
+            font-size: 0.7rem;
+        }
+
+        .refresh-btn {
+            padding: 0.5rem 0.9rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .refresh-btn:hover {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+            color: white;
+        }
+
+        /* Stats Row - New Card Design */
+        .stats-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .stat-card-new {
+            flex: 1;
+            min-width: 180px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.25rem;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .stat-icon-box {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            font-size: 1.5rem;
+        }
+
+        .stat-icon-box.blue {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .stat-icon-box.green {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+
+        .stat-icon-box.purple {
+            background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
+        }
+
+        .stat-icon-box.orange {
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+        }
+
+        .stat-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-number {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        #selectionsPagination {
+    /* margin-top: 10px;
+    text-align: center; */
+    display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            flex-wrap: wrap;
+            gap: 1rem;
+            
+            
+}
+
+#selectionsPagination button {
+    /* padding: 5px 10px;
+    margin: 0 3px;
+    border: 1px solid #ccc;
+    background: #f5f5f5;
+    cursor: pointer; */
+    padding: 0.5rem 1rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+            font-family: inherit;
+          
+}
+#selectionsPagination{
+    justify-content: right;
+}
+
+#selectionsPagination button.active {
+    /* background: #007bff;
+    color: white; */
+    background: var(--accent-primary);
+            border-color: var(--accent-primary);
+            color: white;
+}
+
+#selectionsPagination button:disabled {
+    /* background: #eee;
+    color: #999;
+    cursor: not-allowed; */
+    background: var(--bg-hover);
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+}
+
+
+        /* Old filter styles - keep for picked keywords section */
+        .filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filter-group label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+
+        .filter-input {
+            padding: 0.5rem 0.75rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.9rem;
+        }
+
+        .filter-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-left: auto;
+        }
+
+        .btn-filter {
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+        }
+
+        .filter-count {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-card);
+            border-radius: 8px;
+        }
+
+        .filter-count span {
+            color: var(--accent-primary);
+            font-weight: 600;
+        }
+
+        .keywords-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1rem;
+        }
+
+        /* Pagination Styles */
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .pagination-info {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .pagination-btn {
+            padding: 0.5rem 1rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .pagination-btn:hover:not(.disabled):not(.active) {
+            background: var(--bg-hover);
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+        }
+
+        .pagination-btn.active {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+            color: white;
+        }
+
+        .pagination-btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination-ellipsis {
+            color: var(--text-muted);
+            padding: 0 0.5rem;
+        }
+
+        .keyword-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .keyword-card:hover {
+            background: var(--bg-hover);
+            border-color: var(--accent-primary);
+            transform: translateY(-2px);
+        }
+
+        .keyword-card.selected {
+            background: rgba(0, 212, 170, 0.1);
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        .keyword-checkbox {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .keyword-card.selected .keyword-checkbox {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+        }
+
+        .keyword-checkbox::after {
+            content: '✓';
+            color: #ffffff;
+            font-weight: bold;
+            opacity: 0;
+            transform: scale(0);
+            transition: all 0.2s ease;
+        }
+
+        .keyword-card.selected .keyword-checkbox::after {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .keyword-info {
+            flex: 1;
+        }
+
+        .keyword-text {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+            flex: 1;
+        }
+
+        .keyword-title {
+            font-weight: 400;
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+
+        .keyword-header-row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 0.5rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .team-badges {
+            display: flex;
+            gap: 0.25rem;
+            flex-shrink: 0;
+        }
+
+        .team-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 32px;
+            height: 24px;
+            padding: 0 0.5rem;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #ffffff !important;
+            border-radius: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            cursor: default;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+        }
+
+        .team-badge:hover {
+            transform: scale(1.05);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Ensure team badges are visible in both themes */
+        [data-theme="light"] .team-badge,
+        [data-theme="dark"] .team-badge {
+            color: #ffffff !important;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .keyword-card.has-selections {
+            border-left: 3px solid var(--accent-primary);
+        }
+
+        .keyword-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .keyword-tag {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .keyword-tag.category {
+            color: var(--accent-primary);
+            border-color: var(--accent-primary);
+        }
+
+        .keyword-tag.time {
+            color: var(--warning);
+            border-color: var(--warning);
+        }
+
+        .keyword-tag.date {
+            color: var(--text-secondary);
+        }
+
+        .keyword-remarks {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+            font-style: italic;
+        }
+
+        .keyword-category {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Selections Table */
+        .selections-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th:first-child {
+            border-radius: 8px 0 0 8px;
+        }
+
+        th:last-child {
+            border-radius: 0 8px 8px 0;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: var(--bg-hover);
+        }
+
+        .user-cell {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #ffffff;
+        }
+
+        .keyword-badge {
+            background: rgba(0, 212, 170, 0.1);
+            padding: 0.4rem 0.8rem;
+            border-radius: 8px;
+            color: var(--accent-primary);
+            font-family: 'Source Code Pro', monospace;
+            font-size: 0.9rem;
+        }
+
+        .timestamp {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-family: 'Source Code Pro', monospace;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state::before {
+            content: '📋';
+            display: block;
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(0, 212, 170, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .stat-info h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .stat-info p {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        /* Notification Toast */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--bg-card);
+            border: 1px solid var(--accent-primary);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            border-color: var(--success);
+        }
+
+        .toast.warning {
+            border-color: var(--warning);
+            background: linear-gradient(135deg, var(--bg-card), rgba(251, 191, 36, 0.1));
+        }
+
+        .toast.error {
+            border-color: var(--error);
+            background: linear-gradient(135deg, var(--bg-card), rgba(239, 68, 68, 0.1));
+        }
+
+        .toast-icon {
+            font-size: 1.5rem;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border-color);
+            border-top-color: var(--accent-primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .stats-bar {
+                flex-direction: column;
+            }
+
+            .keywords-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .auth-card {
+                margin: 1rem;
+                padding: 2rem;
+            }
+
+            .filters-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filters-left, .filters-right {
+                justify-content: center;
+            }
+
+            .filter-chip-group {
+                justify-content: center;
+            }
+
+            .stats-row {
+                flex-wrap: wrap;
+            }
+
+            .stat-card-new {
+                min-width: calc(50% - 0.5rem);
+            }
+
+            .stat-icon-box {
+                width: 40px;
+                height: 40px;
+                font-size: 1.25rem;
+            }
+
+            .stat-number {
+                font-size: 1.4rem;
+            }
+
+            .stat-label {
+                font-size: 0.75rem;
+            }
+
+            .search-input {
+                font-size: 0.9rem;
+                padding: 0.85rem 2.5rem;
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Keyword Details Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            transform: scale(0.9);
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active .modal {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .modal-keyword {
+            color: var(--accent-primary);
+            font-family: 'Source Code Pro', monospace;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            line-height: 1;
+            transition: color 0.2s;
+        }
+
+        .modal-close:hover {
+            color: var(--error);
+        }
+
+        /* Stats Modal Styles */
+        .stats-modal-summary {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stats-modal-stat {
+            flex: 1;
+            text-align: center;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+        }
+
+        .stats-modal-value {
+            display: block;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+        }
+
+        .stats-modal-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .stats-modal-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .stats-modal-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            margin-bottom: 0.75rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .stats-modal-item:hover {
+            border-color: var(--accent-primary);
+        }
+
+        .stats-item-left {
+            flex: 1;
+        }
+
+        .stats-item-keyword {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .stats-item-time {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .stats-item-right {
+            text-align: right;
+        }
+
+        .stats-item-picks {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.35rem 0.75rem;
+            background: var(--accent-primary);
+            color: white;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .stat-card-new.clickable {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .stat-card-new.clickable:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            border-color: var(--accent-primary);
+        }
+
+        .modal-stats {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-stat {
+            background: var(--bg-secondary);
+            padding: 1rem;
+            border-radius: 12px;
+            flex: 1;
+            text-align: center;
+        }
+
+        .modal-stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+        }
+
+        .modal-stat-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .modal-users-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .modal-user-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: var(--bg-secondary);
+            padding: 1rem;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        .modal-user-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: #ffffff;
+            flex-shrink: 0;
+        }
+
+        .modal-user-info {
+            flex: 1;
+        }
+
+        .modal-user-name {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .modal-user-team {
+            font-size: 0.85rem;
+            color: var(--accent-primary);
+        }
+
+        .modal-user-time {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-family: 'Source Code Pro', monospace;
+        }
+
+        .keyword-badge-clickable {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .keyword-badge-clickable:hover {
+            background: var(--accent-primary);
+            color: var(--bg-primary);
+            transform: scale(1.05);
+        }
+
+        /* Row number styling */
+        .row-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            background: var(--bg-secondary);
+            border-radius: 50%;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        /* Selection count styling */
+        .selection-count {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 0.35rem 0.75rem;
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .selection-count.warm {
+            background: rgba(251, 191, 36, 0.15);
+            color: var(--warning);
+        }
+
+        .selection-count.hot {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--error);
+            animation: pulse-hot 2s infinite;
+        }
+
+        @keyframes pulse-hot {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">SEO Suggested Keywords</div>
+        <div class="header-actions">
+            <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle theme">
+                <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+                <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+            </button>
+            <div class="user-info hidden" id="userInfo">
+                <div class="user-badge">
+                    <span class="online-indicator"></span>
+                    <span class="name" id="displayName">User</span>
+                    <span class="team" id="displayTeam">Team</span>
+                </div>
+                <button class="btn btn-admin hidden" id="adminBtn" onclick="goToAdmin()" title="Admin Dashboard">
+                    📊 Admin
+                </button>
+                <button class="btn btn-danger" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Auth Section -->
+    <div class="auth-container" id="authSection">
+        <div class="auth-card">
+            <!-- Login Form -->
+            <div id="loginForm">
+                <h2>Welcome Back</h2>
+                <p>Sign in to continue to the dashboard</p>
+                
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="loginName" placeholder="Enter your username">
+                </div>
+                
+                <div class="form-group">
+                    <label>Password</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="loginPassword" placeholder="Enter your password">
+                        <button type="button" class="password-toggle" onclick="togglePassword('loginPassword', this)">
+                            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                            <svg class="eye-off-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                <line x1="1" y1="1" x2="23" y2="23"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <button class="btn btn-primary" onclick="login()">Sign In</button>
+                
+                <div class="auth-toggle">
+                    Don't have an account? <a onclick="showRegister()">Register</a>
+                </div>
+                <div class="auth-toggle">
+                    <a onclick="showForgotPassword()">Forgot Password?</a>
+                </div>
+                
+                <p class="error-msg" id="loginError"></p>
+            </div>
+
+            <!-- Forgot Password Form -->
+            <div id="forgotPasswordForm" class="hidden">
+                <h2>Reset Password</h2>
+                <p>Enter your username and team to verify identity</p>
+                
+                <div class="form-group">
+                    <label>Your Name</label>
+                    <input type="text" id="resetName" placeholder="Enter your username">
+                </div>
+                
+                <div class="form-group">
+                    <label>Project Name</label>
+                    <input type="text" id="resetTeam" placeholder="Enter your Project name for verification">
+                </div>
+                
+                <div class="form-group">
+                    <label>New Password</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="resetNewPassword" placeholder="Enter new password">
+                        <button type="button" class="password-toggle" onclick="togglePassword('resetNewPassword', this)">
+                            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                            <svg class="eye-off-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                <line x1="1" y1="1" x2="23" y2="23"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <button class="btn btn-primary" onclick="resetPassword()">Reset Password</button>
+                
+                <div class="auth-toggle">
+                    Remember your password? <a onclick="showLogin()">Sign In</a>
+                </div>
+                
+                <p class="error-msg" id="resetError"></p>
+                <p class="success-msg" id="resetSuccess"></p>
+            </div>
+
+            <!-- Register Form -->
+            <div id="registerForm" class="hidden">
+                <h2>Create Account</h2>
+                <p>Register to start selecting keywords</p>
+                
+                <div class="form-group">
+                    <label>Your Name</label>
+                    <input type="text" id="registerName" placeholder="Enter your name">
+                </div>
+                
+                <div class="form-group">
+                    <label>Project Name</label>
+                    <select id="registerTeam" class="team-select">
+                        <option value="">  Select Project </option>
+                        <option value="GEO">GEO</option>
+                        <option value="The News">The News</option>
+                        <option value="Jang">Jang</option>
+                        <option value="TCP">TCP</option>
+                        <option value="GadInsider">GadInsider</option>
+                        <option value="Gossip Herald">Gossip Herald</option>
+                        <option value="Hungama">Hungama</option>
+                        <option value="SEO">SEO</option>
+                        <option value="Admin">Admin</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Password</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="registerPassword" placeholder="Create a password">
+                        <button type="button" class="password-toggle" onclick="togglePassword('registerPassword', this)">
+                            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                            <svg class="eye-off-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                <line x1="1" y1="1" x2="23" y2="23"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <button class="btn btn-primary" onclick="register()">Create Account</button>
+                
+                <div class="auth-toggle">
+                    Already have an account? <a onclick="showLogin()">Sign In</a>
+                </div>
+                
+                <p class="error-msg" id="registerError"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Section -->
+    <div class="container dashboard" id="dashboard">
+        <!-- Keywords Section - Redesigned -->
+        <section class="keywords-section">
+            <!-- Search Bar - Prominent at top -->
+            <div class="search-hero">
+                <div class="search-container">
+                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                    <input type="text" class="search-input" id="filterSearch" placeholder="Search keywords, remarks, or categories..." oninput="applyFilters()">
+                    <button class="search-clear" onclick="document.getElementById('filterSearch').value=''; applyFilters();">✕</button>
+                </div>
+            </div>
+
+            <!-- Filters Row -->
+            <div class="filters-row">
+                <div class="filters-left">
+                    <div class="filter-chip-group">
+                        <div class="filter-chip">
+                            <label>📅 From</label>
+                            <input type="date" class="chip-input" id="filterFromDate" onchange="applyFilters()">
+                        </div>
+                        <div class="filter-chip">
+                            <label>📅 To</label>
+                            <input type="date" class="chip-input" id="filterToDate" onchange="applyFilters()">
+                        </div>
+                        <div class="filter-chip">
+                            <label>📁 Category</label>
+                            <select class="chip-input" id="filterCategory" onchange="applyFilters()">
+                                <option value="">All</option>
+                            </select>
+                        </div>
+                        <button class="clear-filters-btn" onclick="clearFilters()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                                <path d="M18 6L6 18M6 6l12 12"></path>
+                            </svg>
+                            Clear All
+                        </button>
+                    </div>
+                </div>
+                <div class="filters-right">
+                    <span class="auto-refresh-badge">
+                        <span class="refresh-dot"></span>
+                        Auto-refresh ON
+                        <span class="last-refresh-time">(Last: <span id="lastRefreshTime">--:--</span>)</span>
+                    </span>
+                    <button class="refresh-btn" onclick="refreshKeywords()">
+                        🔄 Refresh
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Cards - Filter-aware with new design -->
+            <div class="stats-row">
+                <div class="stat-card-new">
+                    <div class="stat-icon-box blue">📊</div>
+                    <div class="stat-content">
+                        <span class="stat-number" id="filteredCount">0</span>
+                        <span class="stat-label">Today's Keywords</span>
+                    </div>
+                </div>
+                <div class="stat-card-new">
+                    <div class="stat-icon-box green">✅</div>
+                    <div class="stat-content">
+                        <span class="stat-number" id="totalSelections">0</span>
+                        <span class="stat-label" id="totalSelectionsLabel">Today's Selections</span>
+                    </div>
+                </div>
+                <div class="stat-card-new clickable" onclick="openStatsModal('your')">
+                    <div class="stat-icon-box purple">👤</div>
+                    <div class="stat-content">
+                        <span class="stat-number" id="mySelections">0</span>
+                        <span class="stat-label">Your Selections</span>
+                    </div>
+                </div>
+                <div class="stat-card-new clickable" onclick="openStatsModal('team')">
+                    <div class="stat-icon-box orange">👥</div>
+                    <div class="stat-content">
+                        <span class="stat-number" id="teamSelections">0</span>
+                        <span class="stat-label">Selection by <span id="teamNameLabel">Team</span></span>
+                    </div>
+                </div>
+            </div>
+            <!-- Hidden element to track total for internal use -->
+            <span id="totalCount" style="display:none;">0</span>
+            
+            <!-- Keywords Grid -->
+            <div class="keywords-grid" id="keywordsGrid">
+                <!-- Keywords will be loaded here -->
+            </div>
+            
+            <!-- Pagination Controls -->
+            <div class="pagination-container" id="keywordsPagination">
+                <!-- Pagination will be rendered here -->
+            </div>
+        </section>
+
+        <!-- Selections Table -->
+        <section class="selections-section">
+            <h2 class="section-title">Picked Keywords</h2>
+            
+            <!-- Selections Filter Bar -->
+            <div class="filter-bar">
+                <div class="filter-group">
+                    <label>From:</label>
+                    <input type="date" class="filter-input" id="selFilterFromDate" onchange="applySelectionFilters()">
+                </div>
+                <div class="filter-group">
+                    <label>To:</label>
+                    <input type="date" class="filter-input" id="selFilterToDate" onchange="applySelectionFilters()">
+                </div>
+                <div class="filter-group">
+                    <label>Team:</label>
+                    <select class="filter-input" id="selFilterTeam" onchange="applySelectionFilters()">
+                        <option value="">All Teams</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Search:</label>
+                    <input type="text" class="filter-input" id="selFilterSearch" placeholder="Search keyword..." oninput="applySelectionFilters()">
+                </div>
+                <div class="filter-actions">
+                    <button class="btn btn-secondary btn-filter" onclick="clearSelectionFilters()">Clear</button>
+                </div>
+                <div class="filter-count">
+                    Showing <span id="selFilteredCount">0</span> of <span id="selTotalCount">0</span>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Keyword</th>
+                            <th>Selections</th>
+                            <th>Latest Pick</th>
+                        </tr>
+                    </thead>
+                    <tbody id="selectionsTable">
+                        <tr>
+                            <td colspan="4">
+                                <div class="empty-state">
+                                    No selections yet. Be the first to select a keyword!
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div id="selectionsPagination" class="pagination"></div>
+
+            </div>
+        </section>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <span class="toast-icon">✨</span>
+        <span class="toast-message" id="toastMessage">Notification</span>
+    </div>
+
+    <!-- Stats Details Modal -->
+    <div class="modal-overlay" id="statsModal" onclick="closeStatsModal(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span id="statsModalTitle">Selections</span>
+                </div>
+                <button class="modal-close" onclick="closeStatsModalBtn()">&times;</button>
+            </div>
+            <div class="stats-modal-summary">
+                <div class="stats-modal-stat">
+                    <span class="stats-modal-value" id="statsModalTotal">0</span>
+                    <span class="stats-modal-label">Total Picks</span>
+                </div>
+                <div class="stats-modal-stat">
+                    <span class="stats-modal-value" id="statsModalKeywords">0</span>
+                    <span class="stats-modal-label">Unique Keywords</span>
+                </div>
+            </div>
+            <div class="stats-modal-list" id="statsModalList">
+                <!-- Stats list will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Keyword Details Modal -->
+    <div class="modal-overlay" id="keywordModal" onclick="closeModal(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div class="modal-title">
+                    Keyword: <span class="modal-keyword" id="modalKeyword">-</span>
+                </div>
+                <button class="modal-close" onclick="closeKeywordModal()">&times;</button>
+            </div>
+            <div class="modal-stats">
+                <div class="modal-stat">
+                    <div class="modal-stat-value" id="modalTotalUsers">0</div>
+                    <div class="modal-stat-label">Total Selections</div>
+                </div>
+                <div class="modal-stat">
+                    <div class="modal-stat-value" id="modalFilteredUsers">0</div>
+                    <div class="modal-stat-label">Filtered</div>
+                </div>
+            </div>
+            
+            <!-- Modal Filters -->
+            <div class="filter-bar" style="margin-bottom: 1rem;">
+                <div class="filter-group">
+                    <label>From:</label>
+                    <input type="date" class="filter-input" id="modalFilterFromDate" onchange="applyModalFilters()">
+                </div>
+                <div class="filter-group">
+                    <label>To:</label>
+                    <input type="date" class="filter-input" id="modalFilterToDate" onchange="applyModalFilters()">
+                </div>
+                <div class="filter-group">
+                    <label>Team:</label>
+                    <select class="filter-input" id="modalFilterTeam" onchange="applyModalFilters()">
+                        <option value="">All Teams</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Search:</label>
+                    <input type="text" class="filter-input" id="modalFilterSearch" placeholder="Search user..." oninput="applyModalFilters()" style="width: 120px;">
+                </div>
+                <button class="btn btn-secondary btn-filter" onclick="clearModalFilters()">Clear</button>
+            </div>
+            
+            <div class="modal-users-list" id="modalUsersList">
+                <!-- Users will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global State
+        const SELECTIONS_PER_PAGE = 20; // Number of items per page
+        let selectionsCurrentPage = 1;  // Current page number
+
+        let currentUser = null;
+        let keywords = [];
+        let selections = [];
+        let socket = null;
+        let inactivityTimer = null;
+        const INACTIVITY_TIMEOUT = 120 * 60 * 1000; // 30 minutes in milliseconds
+
+        // Pagination state
+        let currentPage = 1;
+        const ITEMS_PER_PAGE = 20;
+
+        // Auto-refresh state
+        let autoRefreshInterval = null;
+        const AUTO_REFRESH_INTERVAL = 2 * 60 * 1000; // 2 minutes in milliseconds
+
+        // Auto-logout after inactivity
+        function resetInactivityTimer() {
+            if (inactivityTimer) {
+                clearTimeout(inactivityTimer);
+            }
+            
+            // Only set timer if user is logged in
+            if (currentUser) {
+                // Update session timestamp on activity
+                saveSession(currentUser);
+                
+                inactivityTimer = setTimeout(() => {
+                    showToast('Session expired due to inactivity', 'warning');
+                    setTimeout(() => {
+                        logout();
+                    }, 1500);
+                }, INACTIVITY_TIMEOUT);
+            }
+        }
+
+        function setupActivityListeners() {
+            const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+            events.forEach(event => {
+                document.addEventListener(event, resetInactivityTimer, { passive: true });
+            });
+        }
+
+        // Initialize activity tracking
+        setupActivityListeners();
+
+        // Theme Management
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeIcon(savedTheme);
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+        }
+
+        function updateThemeIcon(theme) {
+            const sunIcon = document.querySelector('.theme-toggle .sun-icon');
+            const moonIcon = document.querySelector('.theme-toggle .moon-icon');
+            
+            if (theme === 'dark') {
+                sunIcon.style.display = 'none';
+                moonIcon.style.display = 'block';
+            } else {
+                sunIcon.style.display = 'block';
+                moonIcon.style.display = 'none';
+            }
+        }
+
+        // Initialize theme immediately to prevent flash
+        initTheme();
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initSocket();
+            
+            // Enter key handlers
+            document.getElementById('loginPassword').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') login();
+            });
+            document.getElementById('registerPassword').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') register();
+            });
+
+            // Restore session from localStorage if available
+            restoreSession();
+        });
+
+        // Session persistence functions
+        function saveSession(user) {
+            const sessionData = {
+                user: user,
+                timestamp: Date.now()
+            };
+            localStorage.setItem('keywordAppSession', JSON.stringify(sessionData));
+        }
+
+        function restoreSession() {
+            try {
+                const sessionStr = localStorage.getItem('keywordAppSession');
+                if (!sessionStr) return;
+
+                const session = JSON.parse(sessionStr);
+                
+                // Check if session is still valid (within 30 minutes)
+                const elapsed = Date.now() - session.timestamp;
+                if (elapsed > INACTIVITY_TIMEOUT) {
+                    // Session expired, clear it
+                    clearSession();
+                    return;
+                }
+
+                // Restore the user
+                if (session.user && session.user.name) {
+                    currentUser = session.user;
+                    showDashboard();
+                    socket.emit('user_online', { username: currentUser.name });
+                    resetInactivityTimer();
+                    showToast('Welcome back, ' + currentUser.name + '!');
+                    
+                    // Update session timestamp
+                    saveSession(currentUser);
+                }
+            } catch (err) {
+                console.error('Error restoring session:', err);
+                clearSession();
+            }
+        }
+
+        function clearSession() {
+            localStorage.removeItem('keywordAppSession');
+        }
+
+        // Socket.IO Connection
+        function initSocket() {
+            socket = io();
+
+            socket.on('connect', () => {
+                console.log('Connected to server');
+                if (currentUser) {
+                    socket.emit('user_online', { username: currentUser.name });
+                }
+            });
+
+            socket.on('selection_update', (data) => {
+                selections = data.selections;
+                renderSelections();
+                updateStats();
+                
+                if (data.user !== currentUser?.name) {
+                    showToast(`${data.user} ${data.action} "${data.keyword}"`);
+                }
+                
+                // Update keyword card selection state
+                renderKeywords();
+            });
+
+            socket.on('keywords_update', (data) => {
+                keywords = data.keywords;
+                renderKeywords();
+                updateStats();
+                updateLastRefreshTime();
+                showToast('Keywords refreshed from Google Sheet!');
+            });
+
+            socket.on('online_users_update', (users) => {
+                console.log('Online users:', users);
+            });
+        }
+
+        // Auth Functions
+        function showLogin() {
+            document.getElementById('loginForm').classList.remove('hidden');
+            document.getElementById('registerForm').classList.add('hidden');
+            document.getElementById('forgotPasswordForm').classList.add('hidden');
+            clearErrors();
+        }
+
+        function showRegister() {
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('registerForm').classList.remove('hidden');
+            document.getElementById('forgotPasswordForm').classList.add('hidden');
+            clearErrors();
+        }
+
+        function showForgotPassword() {
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('registerForm').classList.add('hidden');
+            document.getElementById('forgotPasswordForm').classList.remove('hidden');
+            clearErrors();
+        }
+
+        function clearErrors() {
+            document.getElementById('loginError').textContent = '';
+            document.getElementById('registerError').textContent = '';
+            document.getElementById('resetError').textContent = '';
+            document.getElementById('resetSuccess').textContent = '';
+        }
+
+        // Toggle password visibility
+        function togglePassword(inputId, btn) {
+            const input = document.getElementById(inputId);
+            const eyeIcon = btn.querySelector('.eye-icon');
+            const eyeOffIcon = btn.querySelector('.eye-off-icon');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                eyeIcon.style.display = 'none';
+                eyeOffIcon.style.display = 'block';
+            } else {
+                input.type = 'password';
+                eyeIcon.style.display = 'block';
+                eyeOffIcon.style.display = 'none';
+            }
+        }
+
+        async function login() {
+            const name = document.getElementById('loginName').value.trim();
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, password })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    currentUser = data.user;
+                    saveSession(currentUser); // Save session to localStorage
+                    showDashboard();
+                    socket.emit('user_online', { username: currentUser.name });
+                    resetInactivityTimer(); // Start inactivity timer
+                } else {
+                    document.getElementById('loginError').textContent = data.message;
+                }
+            } catch (err) {
+                document.getElementById('loginError').textContent = 'Connection error. Please try again.';
+            }
+        }
+
+        async function register() {
+            const name = document.getElementById('registerName').value.trim();
+            const team = document.getElementById('registerTeam').value.trim();
+            const password = document.getElementById('registerPassword').value;
+
+            try {
+                const res = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, team, password })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    showToast('Registration successful! Please sign in.');
+                    showLogin();
+                    document.getElementById('loginName').value = name;
+                } else {
+                    document.getElementById('registerError').textContent = data.message;
+                }
+            } catch (err) {
+                document.getElementById('registerError').textContent = 'Connection error. Please try again.';
+            }
+        }
+
+        async function resetPassword() {
+            const name = document.getElementById('resetName').value.trim();
+            const team = document.getElementById('resetTeam').value.trim();
+            const newPassword = document.getElementById('resetNewPassword').value;
+
+            // Clear previous messages
+            document.getElementById('resetError').textContent = '';
+            document.getElementById('resetSuccess').textContent = '';
+
+            if (!name || !team || !newPassword) {
+                document.getElementById('resetError').textContent = 'All fields are required';
+                return;
+            }
+
+            if (newPassword.length < 4) {
+                document.getElementById('resetError').textContent = 'Password must be at least 4 characters';
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/reset-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, team, new_password: newPassword })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    document.getElementById('resetSuccess').textContent = 'Password reset successful!';
+                    showToast('Password reset successful! Please sign in.');
+                    setTimeout(() => {
+                        showLogin();
+                        document.getElementById('loginName').value = name;
+                    }, 1500);
+                } else {
+                    document.getElementById('resetError').textContent = data.message;
+                }
+            } catch (err) {
+                document.getElementById('resetError').textContent = 'Connection error. Please try again.';
+            }
+        }
+
+        async function logout() {
+            // Clear inactivity timer
+            if (inactivityTimer) {
+                clearTimeout(inactivityTimer);
+                inactivityTimer = null;
+            }
+            
+            // Clear saved session
+            clearSession();
+            
+            socket.emit('user_offline', { username: currentUser?.name });
+            currentUser = null;
+            await fetch('/api/logout', { method: 'POST' });
+            showAuth();
+        }
+
+        // UI Functions
+        function showDashboard() {
+            document.getElementById('authSection').classList.add('hidden');
+            document.getElementById('dashboard').classList.add('active');
+            document.getElementById('userInfo').classList.remove('hidden');
+            document.getElementById('displayName').textContent = currentUser.name;
+            document.getElementById('displayTeam').textContent = currentUser.team;
+            
+            // Show admin button if user is admin
+            const adminBtn = document.getElementById('adminBtn');
+            if (currentUser.is_admin) {
+                adminBtn.classList.remove('hidden');
+            } else {
+                adminBtn.classList.add('hidden');
+            }
+            
+            // Update team name in stats card
+            const teamNameLabel = document.getElementById('teamNameLabel');
+            if (teamNameLabel) teamNameLabel.textContent = currentUser.team;
+            
+            loadKeywords();
+            loadSelections();
+            
+            // Start auto-refresh (every 2 minutes)
+            startAutoRefresh();
+        }
+
+        function goToAdmin() {
+            window.location.href = '/admin';
+        }
+
+        function showAuth() {
+            document.getElementById('authSection').classList.remove('hidden');
+            document.getElementById('dashboard').classList.remove('active');
+            document.getElementById('userInfo').classList.add('hidden');
+            
+            // Stop auto-refresh when logged out
+            stopAutoRefresh();
+        }
+
+        // Data Functions
+        async function loadKeywords(silent = false) {
+            try {
+                const res = await fetch('/api/keywords');
+                const data = await res.json();
+                keywords = data.keywords;
+                renderKeywords();
+                updateStats();
+                updateLastRefreshTime();
+                if (!silent) {
+                    console.log('[Auto-Refresh] Keywords updated at', new Date().toLocaleTimeString());
+                }
+            } catch (err) {
+                console.error('Error loading keywords:', err);
+            }
+        }
+
+        function updateLastRefreshTime() {
+            const timeElement = document.getElementById('lastRefreshTime');
+            if (timeElement) {
+                const now = new Date();
+                timeElement.textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            }
+        }
+
+        function startAutoRefresh() {
+            // Clear any existing interval
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+            
+            // Start new interval
+            autoRefreshInterval = setInterval(() => {
+                console.log('[Auto-Refresh] Refreshing keywords...');
+                loadKeywords(true);
+                loadSelections(); // Also refresh selections
+            }, AUTO_REFRESH_INTERVAL);
+            
+            console.log('[Auto-Refresh] Started - refreshing every 2 minutes');
+        }
+
+        function stopAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+                console.log('[Auto-Refresh] Stopped');
+            }
+        }
+
+        async function loadSelections() {
+            try {
+                const res = await fetch('/api/selections');
+                const data = await res.json();
+                selections = data.selections;
+                renderSelections();
+                updateStats();
+            } catch (err) {
+                console.error('Error loading selections:', err);
+            }
+        }
+
+        function refreshKeywords() {
+            showToast('Refreshing keywords...', 'warning');
+            socket.emit('refresh_keywords');
+            // Also do a direct API fetch as backup
+            loadKeywords();
+        }
+
+        // Render Functions
+        // Filter functions
+        function getFilteredKeywords() {
+            const fromDate = document.getElementById('filterFromDate').value;
+            const toDate = document.getElementById('filterToDate').value;
+            const category = document.getElementById('filterCategory').value;
+            const search = document.getElementById('filterSearch').value.toLowerCase();
+            
+            let filtered = keywords.filter(kw => {
+                // Date filter - only filter if keyword has a valid date
+                if (fromDate || toDate) {
+                    const kwDate = parseKeywordDate(kw.date);  // Use separate date column
+                    if (kwDate) {
+                        if (fromDate && kwDate < fromDate) return false;
+                        if (toDate && kwDate > toDate) return false;
+                    }
+                    // If no valid date found but filter is set, still show the keyword
+                }
+                
+                // Category filter
+                if (category && kw.category !== category) return false;
+                
+                // Search filter
+                if (search) {
+                    const searchMatch = 
+                        kw.keyword.toLowerCase().includes(search) ||
+                        (kw.remarks && kw.remarks.toLowerCase().includes(search)) ||
+                        kw.category.toLowerCase().includes(search);
+                    if (!searchMatch) return false;
+                }
+                
+                return true;
+            });
+
+            // Sort by sheet order (last row in sheet appears first)
+            filtered.sort((a, b) => {
+                return b.id - a.id; // Higher id = last in sheet = first on page
+            });
+
+            return filtered;
+        }
+
+        // Check if any filter is applied
+        function isAnyFilterApplied() {
+            const searchVal = document.getElementById('filterSearch')?.value?.trim() || '';
+            const fromDate = document.getElementById('filterFromDate')?.value || '';
+            const toDate = document.getElementById('filterToDate')?.value || '';
+            const category = document.getElementById('filterCategory')?.value || '';
+            
+            return searchVal !== '' || fromDate !== '' || toDate !== '' || category !== '';
+        }
+
+        // Get today's date in DD-MM-YYYY format for comparison
+        function getTodayDateStr() {
+            const today = new Date();
+            const d = String(today.getDate()).padStart(2, '0');
+            const m = String(today.getMonth() + 1).padStart(2, '0');
+            const y = today.getFullYear();
+            return `${d}-${m}-${y}`; // DD-MM-YYYY
+        }
+        
+        // Get today's date in YYYY-MM-DD format for comparison with parsed dates
+        function getTodayForComparison() {
+            const today = new Date();
+            const d = String(today.getDate()).padStart(2, '0');
+            const m = String(today.getMonth() + 1).padStart(2, '0');
+            const y = today.getFullYear();
+            return `${y}-${m}-${d}`; // YYYY-MM-DD
+        }
+        
+        // Count keywords from today's date
+        function getTodaysKeywordsCount() {
+            const todayStr = getTodayForComparison();
+            return keywords.filter(kw => {
+                const kwDate = parseKeywordDate(kw.date);
+                return kwDate === todayStr;
+            }).length;
+        }
+
+        // Get today's selections count (selections made today based on timestamp)
+        function getTodaysSelectionsCount() {
+            const today = new Date();
+            const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+            
+            return selections.filter(s => {
+                if (!s.timestamp) return false;
+                // Parse timestamp and compare date part
+                const selDate = new Date(s.timestamp);
+                const selDateStr = `${selDate.getFullYear()}-${String(selDate.getMonth() + 1).padStart(2, '0')}-${String(selDate.getDate()).padStart(2, '0')}`;
+                return selDateStr === todayStr;
+            }).length;
+        }
+
+        function parseKeywordDate(dateStr) {
+            if (!dateStr) return null;
+            dateStr = String(dateStr).trim();
+            if (!dateStr) return null;
+            
+            try {
+                // Format 1: DD-MM-YYYY (Your preferred format: 01-01-2026)
+                let match = dateStr.match(/(\d{1,2})-(\d{1,2})-(\d{4})/);
+                if (match) {
+                    const d = match[1].padStart(2, '0');
+                    const m = match[2].padStart(2, '0');
+                    const y = match[3];
+                    return `${y}-${m}-${d}`;  // Convert to YYYY-MM-DD for comparison
+                }
+                
+                // Format 2: DD/MM/YYYY or D/M/YYYY
+                match = dateStr.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+                if (match) {
+                    const d = match[1].padStart(2, '0');
+                    const m = match[2].padStart(2, '0');
+                    const y = match[3];
+                    return `${y}-${m}-${d}`;
+                }
+                
+                // Format 3: YYYY-MM-DD
+                match = dateStr.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+                if (match) {
+                    const y = match[1];
+                    const m = match[2].padStart(2, '0');
+                    const d = match[3].padStart(2, '0');
+                    return `${y}-${m}-${d}`;
+                }
+                
+                // Format 4: Try JavaScript Date parsing as fallback
+                const jsDate = new Date(dateStr);
+                if (!isNaN(jsDate.getTime())) {
+                    const y = jsDate.getFullYear();
+                    const m = String(jsDate.getMonth() + 1).padStart(2, '0');
+                    const d = String(jsDate.getDate()).padStart(2, '0');
+                    return `${y}-${m}-${d}`;
+                }
+                
+                console.log('Could not parse date:', dateStr);
+                return null;
+            } catch (e) {
+                console.log('Date parse error:', e, dateStr);
+                return null;
+            }
+        }
+
+        function updateCategoryFilter() {
+            const select = document.getElementById('filterCategory');
+            const categories = [...new Set(keywords.map(kw => kw.category).filter(c => c))];
+            
+            // Keep current selection
+            const currentValue = select.value;
+            
+            // Clear and rebuild options
+            select.innerHTML = '<option value="">All Categories</option>';
+            categories.sort().forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat;
+                option.textContent = cat;
+                select.appendChild(option);
+            });
+            
+            // Restore selection if still valid
+            if (categories.includes(currentValue)) {
+                select.value = currentValue;
+            }
+        }
+
+        function applyFilters() {
+            currentPage = 1; // Reset to first page when filters change
+            renderKeywords();
+            updateStats(); // Update stats based on filters
+        }
+
+        function clearFilters() {
+            currentPage = 1; // Reset to first page
+            document.getElementById('filterFromDate').value = '';
+            document.getElementById('filterToDate').value = '';
+            document.getElementById('filterCategory').value = '';
+            document.getElementById('filterSearch').value = '';
+            applyFilters();
+        }
+
+        // Team abbreviations mapping
+        // =====================================================
+        // TEAM ABBREVIATIONS - ADD NEW TEAMS HERE
+        // Format: 'Team Name': { abbr: 'SHORT', color: '#hexcolor' }
+        // =====================================================
+        const TEAM_ABBREVIATIONS = {
+            'Data': { abbr: 'DATA', color: '#e74c3c' },           // Red
+            'GEO': { abbr: 'GEO', color: '#c0392b' },             // Dark Red
+            'The News': { abbr: 'TN', color: '#3498db' },         // Blue
+            'Jang': { abbr: 'JANG', color: '#27ae60' },           // Green
+            'TCP': { abbr: 'TCP', color: '#9b59b6' },             // Purple
+            'GadInsider': { abbr: 'GadIns', color: '#f39c12' },   // Orange
+            'Gossip Herald': { abbr: 'GH', color: '#1abc9c' },    // Teal
+            'Hungama': { abbr: 'HG', color: '#e91e63' },           // Pink
+            'SEO': { abbr: 'SEO', color: '#486e70' },
+            'Admin': { abbr: 'ADM', color: '#725eae' }
+            // ADD MORE TEAMS BELOW (don't forget comma after each line except last)
+            // 'New Team': { abbr: 'NT', color: '#hexcode' }
+        };
+
+        function getTeamBadge(teamName) {
+            const team = TEAM_ABBREVIATIONS[teamName];
+            if (team) {
+                return { abbr: team.abbr, color: team.color };
+            }
+            // Default: first 2 letters uppercase
+            return { 
+                abbr: teamName.substring(0, 2).toUpperCase(), 
+                color: '#6c757d' 
+            };
+        }
+
+        function getTeamsForKeyword(keyword) {
+            // Get unique teams that have selected this keyword
+            const teams = [...new Set(
+                selections
+                    .filter(s => s.keyword === keyword)
+                    .map(s => s.team)
+            )];
+            return teams;
+        }
+
+        function renderKeywords() {
+            const grid = document.getElementById('keywordsGrid');
+            const paginationContainer = document.getElementById('keywordsPagination');
+            
+            // Update category dropdown
+            updateCategoryFilter();
+            
+            if (keywords.length === 0) {
+                grid.innerHTML = '<div class="empty-state">No keywords available. Click refresh to load from Google Sheet.</div>';
+                document.getElementById('filteredCount').textContent = '0';
+                document.getElementById('totalCount').textContent = '0';
+                if (paginationContainer) paginationContainer.innerHTML = '';
+                return;
+            }
+
+            // Get filtered keywords (already sorted by date/time newest first)
+            const filteredKeywords = getFilteredKeywords();
+            
+            // Update counts - show today's count by default, or filtered count if any filter is applied
+            const hasFiltersApplied = isAnyFilterApplied();
+            const filteredCountLabel = document.querySelector('#filteredCount + .stat-label') || 
+                                       document.querySelector('#filteredCount').parentElement.querySelector('.stat-label');
+            
+            if (hasFiltersApplied) {
+                document.getElementById('filteredCount').textContent = filteredKeywords.length; // Filtered count
+                if (filteredCountLabel) filteredCountLabel.textContent = 'Filtered Keywords';
+            } else {
+                document.getElementById('filteredCount').textContent = getTodaysKeywordsCount(); // Today's keywords only
+                if (filteredCountLabel) filteredCountLabel.textContent = "Today's Keywords";
+            }
+            document.getElementById('totalCount').textContent = keywords.length;
+
+            if (filteredKeywords.length === 0) {
+                grid.innerHTML = '<div class="empty-state">No keywords match your filters. Try adjusting the date range or search.</div>';
+                if (paginationContainer) paginationContainer.innerHTML = '';
+                return;
+            }
+
+            // Pagination calculations
+            const totalPages = Math.ceil(filteredKeywords.length / ITEMS_PER_PAGE);
+            if (currentPage > totalPages) currentPage = 1;
+            
+            const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+            const endIndex = startIndex + ITEMS_PER_PAGE;
+            const paginatedKeywords = filteredKeywords.slice(startIndex, endIndex);
+
+            // Render keywords for current page
+            grid.innerHTML = paginatedKeywords.map(kw => {
+                const isSelected = selections.some(s => s.user === currentUser?.name && s.keyword === kw.keyword);
+                const teamsSelected = getTeamsForKeyword(kw.keyword);
+                
+                // Generate team badges HTML
+                const teamBadgesHTML = teamsSelected.length > 0 ? `
+                    <div class="team-badges">
+                        ${teamsSelected.map(team => {
+                            const badge = getTeamBadge(team);
+                            return `<span class="team-badge" style="background: ${badge.color};" title="Selected by ${team}">${badge.abbr}</span>`;
+                        }).join('')}
+                    </div>
+                ` : '';
+
+                return `
+                    <div class="keyword-card ${isSelected ? 'selected' : ''} ${teamsSelected.length > 0 ? 'has-selections' : ''}" onclick="toggleKeyword('${kw.keyword.replace(/'/g, "\\'")}')">
+                        <div class="keyword-checkbox"></div>
+                        <div class="keyword-info">
+                            <div class="keyword-header-row">
+                                <div class="keyword-text">${kw.keyword}${kw.title ? ` <span class="keyword-title">- ${kw.title}</span>` : ''}</div>
+                                ${teamBadgesHTML}
+                            </div> 
+                            ${kw.remarks ? `<div class="keyword-remarks">${kw.remarks}</div>` : ''}
+                            <div class="keyword-meta">
+                                <span class="keyword-tag category">${kw.category}</span>
+                                ${kw.hours_ago ? `<span class="keyword-tag time">${kw.hours_ago}</span>` : ''}
+                                ${kw.date ? `<span class="keyword-tag date">📅 ${kw.date}</span>` : ''}
+                                ${kw.time ? `<span class="keyword-tag time">🕐 ${kw.time}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Render pagination controls
+            renderPagination(totalPages, filteredKeywords.length);
+        }
+
+        function renderPagination(totalPages, totalItems) {
+            const container = document.getElementById('keywordsPagination');
+            if (!container) return;
+
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let paginationHTML = `
+                <div class="pagination-info">
+                    Showing ${((currentPage - 1) * ITEMS_PER_PAGE) + 1}-${Math.min(currentPage * ITEMS_PER_PAGE, totalItems)} of ${totalItems}
+                </div>
+                <div class="pagination-controls">
+            `;
+
+            // Previous button
+            paginationHTML += `
+                <button class="pagination-btn ${currentPage === 1 ? 'disabled' : ''}" 
+                        onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
+                    ← Prev
+                </button>
+            `;
+
+            // Page numbers
+            const maxVisiblePages = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+            
+            if (endPage - startPage < maxVisiblePages - 1) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+
+            if (startPage > 1) {
+                paginationHTML += `<button class="pagination-btn" onclick="goToPage(1)">1</button>`;
+                if (startPage > 2) paginationHTML += `<span class="pagination-ellipsis">...</span>`;
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                paginationHTML += `
+                    <button class="pagination-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">
+                        ${i}
+                    </button>
+                `;
+            }
+
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) paginationHTML += `<span class="pagination-ellipsis">...</span>`;
+                paginationHTML += `<button class="pagination-btn" onclick="goToPage(${totalPages})">${totalPages}</button>`;
+            }
+
+            // Next button
+            paginationHTML += `
+                <button class="pagination-btn ${currentPage === totalPages ? 'disabled' : ''}" 
+                        onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
+                    Next →
+                </button>
+            `;
+
+            paginationHTML += '</div>';
+            container.innerHTML = paginationHTML;
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            renderKeywords();
+            // Scroll to top of keywords section
+            document.getElementById('keywordsGrid').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // Selection filters
+        function getFilteredSelections() {
+            const fromDate = document.getElementById('selFilterFromDate').value;
+            const toDate = document.getElementById('selFilterToDate').value;
+            const team = document.getElementById('selFilterTeam').value;
+            const search = document.getElementById('selFilterSearch').value.toLowerCase();
+            
+            return selections.filter(sel => {
+                // Date filter (based on timestamp)
+                if (fromDate || toDate) {
+                    const selDate = sel.timestamp.split(' ')[0]; // Get YYYY-MM-DD part
+                    if (fromDate && selDate < fromDate) return false;
+                    if (toDate && selDate > toDate) return false;
+                }
+                
+                // Team filter
+                if (team && sel.team !== team) return false;
+                
+                // Search filter
+                if (search) {
+                    const searchMatch = 
+                        sel.user.toLowerCase().includes(search) ||
+                        sel.keyword.toLowerCase().includes(search) ||
+                        sel.team.toLowerCase().includes(search);
+                    if (!searchMatch) return false;
+                }
+                
+                return true;
+            });
+        }
+
+        function updateTeamFilter() {
+            const select = document.getElementById('selFilterTeam');
+            const teams = [...new Set(selections.map(s => s.team).filter(t => t))];
+            
+            const currentValue = select.value;
+            select.innerHTML = '<option value="">All Teams</option>';
+            teams.sort().forEach(team => {
+                const option = document.createElement('option');
+                option.value = team;
+                option.textContent = team;
+                select.appendChild(option);
+            });
+            
+            if (teams.includes(currentValue)) {
+                select.value = currentValue;
+            }
+        }
+
+        function applySelectionFilters() {
+            selectionsCurrentPage = 1;
+            renderSelections();
+        }
+
+        function clearSelectionFilters() {
+            document.getElementById('selFilterFromDate').value = '';
+            document.getElementById('selFilterToDate').value = '';
+            document.getElementById('selFilterTeam').value = '';
+            document.getElementById('selFilterSearch').value = '';
+            applySelectionFilters();
+        }
+
+//         function renderSelections() {
+//             const tbody = document.getElementById('selectionsTable');
+            
+//             // Update team dropdown
+//             updateTeamFilter();
+            
+//             if (selections.length === 0) {
+//                 tbody.innerHTML = `
+//                     <tr>
+//                         <td colspan="4">
+//                             <div class="empty-state">
+//                                 No selections yet. Be the first to select a keyword!
+//                             </div>
+//                         </td>
+//                     </tr>
+//                 `;
+//                 document.getElementById('selFilteredCount').textContent = '0';
+//                 document.getElementById('selTotalCount').textContent = '0';
+//                 return;
+//             }
+
+//             // Get filtered selections
+//             const filteredSelections = getFilteredSelections();
+
+//             // Group selections by keyword
+//             const keywordGroups = {};
+//             filteredSelections.forEach(sel => {
+//                 if (!keywordGroups[sel.keyword]) {
+//                     keywordGroups[sel.keyword] = {
+//                         keyword: sel.keyword,
+//                         count: 0,
+//                         latestTime: sel.timestamp,
+//                         latestDate: new Date(sel.timestamp)
+//                     };
+//                 }
+//                 keywordGroups[sel.keyword].count++;
+//                 const selDate = new Date(sel.timestamp);
+//                 if (selDate > keywordGroups[sel.keyword].latestDate) {
+//                     keywordGroups[sel.keyword].latestTime = sel.timestamp;
+//                     keywordGroups[sel.keyword].latestDate = selDate;
+//                 }
+//             });
+
+//             // Convert to array and sort by count (highest first), then by latest time
+//             const groupedKeywords = Object.values(keywordGroups).sort((a, b) => {
+//                 // if (b.count !== a.count) return b.count - a.count;
+//                 return b.latestDate - a.latestDate;
+//             });
+            
+//             // Update counts
+//             document.getElementById('selFilteredCount').textContent = groupedKeywords.length;
+//             document.getElementById('selTotalCount').textContent = Object.keys(
+//                 selections.reduce((acc, s) => { acc[s.keyword] = true; return acc; }, {})
+//             ).length;
+
+//             if (groupedKeywords.length === 0) {
+//                 tbody.innerHTML = `
+//                     <tr>
+//                         <td colspan="4">
+//                             <div class="empty-state">
+//                                 No selections match your filters.
+//                             </div>
+//                         </td>
+//                     </tr>
+//                 `;
+//                 return;
+//             }
+
+//             // tbody.innerHTML = groupedKeywords.map((group, index) => `
+//             //     <tr>
+//             //         <td><span class="row-number">${index + 1}</span></td>
+//             //         <td><span class="keyword-badge keyword-badge-clickable" onclick="openKeywordModal('${group.keyword.replace(/'/g, "\\'")}')">${group.keyword}</span></td>
+//             //         <td><span class="selection-count ${group.count >= 3 ? 'hot' : group.count >= 2 ? 'warm' : ''}">${group.count} ${group.count === 1 ? 'pick' : 'picks'}</span></td>
+//             //         <td><span class="timestamp">${group.latestTime}</span></td>
+//             //     </tr>
+//             // `).join('');
+
+//             tbody.innerHTML = groupedKeywords.map((group, index) => {
+//     // Get unique teams that picked this keyword
+//     const teamsSelected = [...new Set(
+//         selections
+//             .filter(s => s.keyword === group.keyword)
+//             .map(s => s.team)
+//     )];
+
+//     // Generate team badges HTML
+//     const teamBadgesHTML = teamsSelected.length > 0 ? `
+//         <div class="team-badges">
+//             ${teamsSelected.map(team => {
+//                 const badge = getTeamBadge(team);
+//                 return `<span class="team-badge" style="background: ${badge.color};" title="Selected by ${team}">${badge.abbr}</span>`;
+//             }).join('')}
+//         </div>
+//     ` : '';
+
+//     return `
+//         <tr>
+//             <td><span class="row-number">${index + 1}</span></td>
+//             <td>
+//                 <span class="keyword-badge keyword-badge-clickable" onclick="openKeywordModal('${group.keyword.replace(/'/g, "\\'")}')">
+//                     ${group.keyword}
+//                 </span>
+//             </td>
+//             <!-- REPLACED COUNT WITH BADGES -->
+//             <td>${teamBadgesHTML}</td>
+//             <td><span class="timestamp">${group.latestTime}</span></td>
+//         </tr>
+//     `;
+// }).join('');
+
+        // }
+
+
+
+        function renderSelections() {
+    const tbody = document.getElementById('selectionsTable');
+
+    // 1️⃣ Apply filters
+    const filteredSelections = getFilteredSelections(); // your existing function
+
+    if (filteredSelections.length === 0) {
+        tbody.innerHTML = `<tr>
+            <td colspan="4">
+                <div class="empty-state">No selections match your filters.</div>
+            </td>
+        </tr>`;
+        document.getElementById('selFilteredCount').textContent = '0';
+        document.getElementById('selTotalCount').textContent = '0';
+        renderSelectionsPagination(0); // no pages
+        return;
+    }
+
+    // 2️⃣ Group selections by keyword
+    const keywordGroups = {};
+    filteredSelections.forEach(sel => {
+        if (!keywordGroups[sel.keyword]) {
+            keywordGroups[sel.keyword] = {
+                keyword: sel.keyword,
+                count: 0,
+                latestTime: sel.timestamp,
+                latestDate: new Date(sel.timestamp)
+            };
+        }
+        keywordGroups[sel.keyword].count++;
+        const selDate = new Date(sel.timestamp);
+        if (selDate > keywordGroups[sel.keyword].latestDate) {
+            keywordGroups[sel.keyword].latestTime = sel.timestamp;
+            keywordGroups[sel.keyword].latestDate = selDate;
+        }
+    });
+
+    let groupedKeywords = Object.values(keywordGroups)
+        .sort((a, b) => b.latestDate - a.latestDate); // sort by latest
+
+    // 3️⃣ Update counts
+    document.getElementById('selFilteredCount').textContent = groupedKeywords.length;
+    document.getElementById('selTotalCount').textContent = Object.keys(
+        selections.reduce((acc, s) => { acc[s.keyword] = true; return acc; }, {})
+    ).length;
+
+    // 4️⃣ Pagination calculations
+    const totalPages = Math.ceil(groupedKeywords.length / SELECTIONS_PER_PAGE);
+    if (selectionsCurrentPage > totalPages) selectionsCurrentPage = 1;
+    const startIndex = (selectionsCurrentPage - 1) * SELECTIONS_PER_PAGE;
+    const endIndex = startIndex + SELECTIONS_PER_PAGE;
+    const paginatedKeywords = groupedKeywords.slice(startIndex, endIndex);
+
+    // 5️⃣ Render table rows version 1 ----------------- add badges instead of count
+    tbody.innerHTML = paginatedKeywords.map((group, index) => `
+        <tr>
+            <td><span class="row-number">${startIndex + index + 1}</span></td>
+            <td><span class="keyword-badge keyword-badge-clickable"
+                      onclick="openKeywordModal('${group.keyword.replace(/'/g, "\\'")}')">
+                  ${group.keyword}
+                </span></td>
+                
+            <td>
+  <div class="team-badges">
+    ${[...new Set(
+        selections
+          .filter(s => s.keyword === group.keyword)
+          .map(s => s.team)
+      )].map(team => {
+          const badge = getTeamBadge(team);
+          return `<span class="team-badge" style="background: ${badge.color};" title="Selected by ${team}">${badge.abbr}</span>`;
+      }).join('')}
+  </div>
+</td>
+
+            <td><span class="timestamp">${group.latestTime}</span></td>
+        </tr>
+    `).join('');
+
+    // 6️⃣ Render pagination buttons
+    renderSelectionsPagination(totalPages);
+}
+// function renderSelectionsPagination(totalPages) {
+//     const container = document.getElementById('selectionsPagination');
+//     if (!container || totalPages <= 1) {
+//         container.innerHTML = '';
+//         return;
+//     }
+
+//     let html = '';
+   
+
+//     // Previous button
+//     html += `<button ${selectionsCurrentPage === 1 ? 'disabled' : ''}
+//                      onclick="goToSelectionsPage(${selectionsCurrentPage - 1})">Prev</button>`;
+
+//     // Page numbers
+//     for (let i = 1; i <= totalPages; i++) {
+//         html += `<button class="${i === selectionsCurrentPage ? 'active' : ''}"
+//                          onclick="goToSelectionsPage(${i})">${i}</button>`;
+//     }
+
+//     // Next button
+//     html += `<button ${selectionsCurrentPage === totalPages ? 'disabled' : ''}
+//                      onclick="goToSelectionsPage(${selectionsCurrentPage + 1})">Next</button>`;
+
+//     container.innerHTML = html;
+
+
+
+    
+// }
+
+
+
+
+        function renderSelectionsPagination(totalPages) {
+            const container = document.getElementById('selectionsPagination');
+            if (!container || totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let html = '';
+
+            // Prev
+            html += `<button ${selectionsCurrentPage === 1 ? 'disabled' : ''} 
+                    onclick="goToSelectionsPage(${selectionsCurrentPage - 1})">Prev</button>`;
+
+            // Always show page 1
+            html += `<button class="${selectionsCurrentPage === 1 ? 'active' : ''}"
+                    onclick="goToSelectionsPage(1)">1</button>`;
+
+            // Ellipsis after 1
+            if (selectionsCurrentPage > 3) {
+                html += `<span class="ellipsis">...</span>`;
+            }
+
+            // Middle pages (current -1, current, current +1)
+            const start = Math.max(2, selectionsCurrentPage - 1);
+            const end = Math.min(totalPages - 1, selectionsCurrentPage + 1);
+
+            for (let i = start; i <= end; i++) {
+                html += `<button class="${i === selectionsCurrentPage ? 'active' : ''}"
+                        onclick="goToSelectionsPage(${i})">${i}</button>`;
+            }
+
+            // Ellipsis before last
+            if (selectionsCurrentPage < totalPages - 2) {
+                html += `<span class="ellipsis">...</span>`;
+            }
+
+            // Always show last page
+            if (totalPages > 1) {
+                html += `<button class="${selectionsCurrentPage === totalPages ? 'active' : ''}"
+                        onclick="goToSelectionsPage(${totalPages})">${totalPages}</button>`;
+            }
+
+            // Next
+            html += `<button ${selectionsCurrentPage === totalPages ? 'disabled' : ''} 
+                    onclick="goToSelectionsPage(${selectionsCurrentPage + 1})">Next</button>`;
+
+            container.innerHTML = html;
+        }
+
+
+
+
+
+
+
+
+            
+   
+
+
+function goToSelectionsPage(page) {
+    selectionsCurrentPage = page;
+    renderSelections();
+    document.getElementById('selectionsTable').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+
+
+
+        function updateStats() {
+            // Check if any filter is applied
+            const hasFiltersApplied = isAnyFilterApplied();
+            
+            // Get the filtered keywords list
+            const filteredKeywords = getFilteredKeywords();
+            const filteredKeywordNames = filteredKeywords.map(k => k.keyword);
+            
+            // Filter selections to only include those matching filtered keywords
+            const filteredSelections = selections.filter(s => filteredKeywordNames.includes(s.keyword));
+            
+            // Total selections - show today's by default, filtered when filter applied
+            const totalSelectionsLabel = document.getElementById('totalSelectionsLabel');
+            if (hasFiltersApplied) {
+                document.getElementById('totalSelections').textContent = filteredSelections.length;
+                if (totalSelectionsLabel) totalSelectionsLabel.textContent = 'Filtered Selections';
+            } else {
+                document.getElementById('totalSelections').textContent = getTodaysSelectionsCount();
+                if (totalSelectionsLabel) totalSelectionsLabel.textContent = "Today's Selections";
+            }
+            
+            // Your selections count (only for filtered keywords if filter applied, else today's)
+            let myCount;
+            if (hasFiltersApplied) {
+                myCount = filteredSelections.filter(s => s.user === currentUser?.name).length;
+            } else {
+                // Today's selections by current user
+                const today = new Date();
+                const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+                myCount = selections.filter(s => {
+                    if (s.user !== currentUser?.name) return false;
+                    if (!s.timestamp) return false;
+                    const selDate = new Date(s.timestamp);
+                    const selDateStr = `${selDate.getFullYear()}-${String(selDate.getMonth() + 1).padStart(2, '0')}-${String(selDate.getDate()).padStart(2, '0')}`;
+                    return selDateStr === todayStr;
+                }).length;
+            }
+            document.getElementById('mySelections').textContent = myCount;
+            
+            // Team selections count (only for filtered keywords if filter applied, else today's)
+            let teamCount;
+            if (hasFiltersApplied) {
+                teamCount = filteredSelections.filter(s => s.team === currentUser?.team).length;
+            } else {
+                // Today's selections by team
+                const today = new Date();
+                const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+                teamCount = selections.filter(s => {
+                    if (s.team !== currentUser?.team) return false;
+                    if (!s.timestamp) return false;
+                    const selDate = new Date(s.timestamp);
+                    const selDateStr = `${selDate.getFullYear()}-${String(selDate.getMonth() + 1).padStart(2, '0')}-${String(selDate.getDate()).padStart(2, '0')}`;
+                    return selDateStr === todayStr;
+                }).length;
+            }
+            document.getElementById('teamSelections').textContent = teamCount;
+            
+            // Update team name label
+            const teamNameLabel = document.getElementById('teamNameLabel');
+            if (teamNameLabel && currentUser?.team) {
+                teamNameLabel.textContent = currentUser.team;
+            }
+        }
+
+        // Actions
+        function toggleKeyword(keyword) {
+            if (!currentUser) return;
+
+            socket.emit('select_keyword', {
+                username: currentUser.name,
+                team: currentUser.team,
+                keyword: keyword
+            });
+        }
+
+        // Toast Notification
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMessage').textContent = message;
+            
+            // Remove previous type classes
+            toast.classList.remove('success', 'warning', 'error');
+            toast.classList.add(type);
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Keyword Modal Functions
+        // Modal data storage
+        let modalUsersData = [];
+        let currentModalKeyword = '';
+
+        async function openKeywordModal(keyword) {
+            const modal = document.getElementById('keywordModal');
+            const modalKeyword = document.getElementById('modalKeyword');
+            const modalTotalUsers = document.getElementById('modalTotalUsers');
+            const modalFilteredUsers = document.getElementById('modalFilteredUsers');
+            const modalUsersList = document.getElementById('modalUsersList');
+            
+            // Clear previous filters
+            clearModalFilters();
+            
+            // Show modal with loading state
+            currentModalKeyword = keyword;
+            modalKeyword.textContent = keyword;
+            modalTotalUsers.textContent = '...';
+            modalFilteredUsers.textContent = '...';
+            modalUsersList.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-muted);">Loading...</div>';
+            modal.classList.add('active');
+            
+            try {
+                const res = await fetch(`/api/keyword-details/${encodeURIComponent(keyword)}`);
+                const data = await res.json();
+                
+                modalUsersData = data.users;
+                modalTotalUsers.textContent = data.total_selections;
+                
+                // Update team dropdown for modal
+                updateModalTeamFilter();
+                
+                // Render users
+                renderModalUsers();
+                
+            } catch (err) {
+                console.error('Error fetching keyword details:', err);
+                modalUsersList.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--error);">Error loading data</div>';
+            }
+        }
+
+        function getFilteredModalUsers() {
+            const fromDate = document.getElementById('modalFilterFromDate').value;
+            const toDate = document.getElementById('modalFilterToDate').value;
+            const team = document.getElementById('modalFilterTeam').value;
+            const search = document.getElementById('modalFilterSearch').value.toLowerCase();
+            
+            return modalUsersData.filter(user => {
+                // Date filter
+                if (fromDate || toDate) {
+                    const userDate = user.timestamp.split(' ')[0];
+                    if (fromDate && userDate < fromDate) return false;
+                    if (toDate && userDate > toDate) return false;
+                }
+                
+                // Team filter
+                if (team && user.team !== team) return false;
+                
+                // Search filter
+                if (search) {
+                    const searchMatch = 
+                        user.user.toLowerCase().includes(search) ||
+                        user.team.toLowerCase().includes(search);
+                    if (!searchMatch) return false;
+                }
+                
+                return true;
+            });
+        }
+
+        function updateModalTeamFilter() {
+            const select = document.getElementById('modalFilterTeam');
+            const teams = [...new Set(modalUsersData.map(u => u.team).filter(t => t))];
+            
+            select.innerHTML = '<option value="">All Teams</option>';
+            teams.sort().forEach(team => {
+                const option = document.createElement('option');
+                option.value = team;
+                option.textContent = team;
+                select.appendChild(option);
+            });
+        }
+
+        function renderModalUsers() {
+            const modalUsersList = document.getElementById('modalUsersList');
+            const modalFilteredUsers = document.getElementById('modalFilteredUsers');
+            
+            const filteredUsers = getFilteredModalUsers();
+            modalFilteredUsers.textContent = filteredUsers.length;
+            
+            if (filteredUsers.length === 0) {
+                modalUsersList.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-muted);">No users match your filters.</div>';
+                return;
+            }
+            
+            modalUsersList.innerHTML = filteredUsers.map(user => `
+                <div class="modal-user-item">
+                    <div class="modal-user-avatar">${user.user.charAt(0).toUpperCase()}</div>
+                    <div class="modal-user-info">
+                        <div class="modal-user-name">${user.user}</div>
+                        <div class="modal-user-team">${user.team}</div>
+                    </div>
+                    <div class="modal-user-time">${user.timestamp}</div>
+                </div>
+            `).join('');
+        }
+
+        function applyModalFilters() {
+            renderModalUsers();
+        }
+
+        function clearModalFilters() {
+            document.getElementById('modalFilterFromDate').value = '';
+            document.getElementById('modalFilterToDate').value = '';
+            document.getElementById('modalFilterTeam').value = '';
+            document.getElementById('modalFilterSearch').value = '';
+            if (modalUsersData.length > 0) {
+                renderModalUsers();
+            }
+        }
+
+        function closeKeywordModal() {
+            document.getElementById('keywordModal').classList.remove('active');
+            modalUsersData = [];
+            currentModalKeyword = '';
+        }
+
+        function closeModal(event) {
+            if (event.target.classList.contains('modal-overlay')) {
+                closeKeywordModal();
+            }
+        }
+
+        // Stats Modal Functions
+        function openStatsModal(type) {
+            const modal = document.getElementById('statsModal');
+            const titleEl = document.getElementById('statsModalTitle');
+            const totalEl = document.getElementById('statsModalTotal');
+            const keywordsEl = document.getElementById('statsModalKeywords');
+            const listEl = document.getElementById('statsModalList');
+
+            // Get filtered keywords for context
+            const filteredKeywords = getFilteredKeywords();
+            const filteredKeywordNames = filteredKeywords.map(k => k.keyword);
+            
+            // Filter selections based on type
+            let filteredSelections;
+            if (type === 'your') {
+                titleEl.textContent = `Your Selections`;
+                filteredSelections = selections.filter(s => 
+                    s.user === currentUser?.name && 
+                    filteredKeywordNames.includes(s.keyword)
+                );
+            } else if (type === 'team') {
+                titleEl.textContent = `Selections by ${currentUser?.team || 'Team'}`;
+                filteredSelections = selections.filter(s => 
+                    s.team === currentUser?.team && 
+                    filteredKeywordNames.includes(s.keyword)
+                );
+            }
+
+            // Group by keyword and count picks
+            const keywordGroups = {};
+            filteredSelections.forEach(sel => {
+                if (!keywordGroups[sel.keyword]) {
+                    keywordGroups[sel.keyword] = {
+                        keyword: sel.keyword,
+                        picks: [],
+                        latestTime: sel.timestamp
+                    };
+                }
+                keywordGroups[sel.keyword].picks.push({
+                    user: sel.user,
+                    team: sel.team,
+                    timestamp: sel.timestamp
+                });
+                // Track latest time
+                if (new Date(sel.timestamp) > new Date(keywordGroups[sel.keyword].latestTime)) {
+                    keywordGroups[sel.keyword].latestTime = sel.timestamp;
+                }
+            });
+
+            // Convert to array and sort by latest time
+            const groupedData = Object.values(keywordGroups).sort((a, b) => 
+                new Date(b.latestTime) - new Date(a.latestTime)
+            );
+
+            // Update summary stats
+            totalEl.textContent = filteredSelections.length;
+            keywordsEl.textContent = groupedData.length;
+
+            // Render list
+            if (groupedData.length === 0) {
+                listEl.innerHTML = `
+                    <div class="empty-state" style="padding: 2rem; text-align: center;">
+                        No selections found for the current filters.
+                    </div>
+                `;
+            } else {
+                listEl.innerHTML = groupedData.map(item => `
+                    <div class="stats-modal-item">
+                        <div class="stats-item-left">
+                            <div class="stats-item-keyword">${item.keyword}</div>
+                            <div class="stats-item-time">
+                                ${type === 'team' ? `👤 ${item.picks.map(p => p.user).join(', ')} · ` : ''}
+                                📅 ${item.latestTime}
+                            </div>
+                        </div>
+                        <div class="stats-item-right">
+                            <span class="stats-item-picks">
+                                ${item.picks.length} ${item.picks.length === 1 ? 'pick' : 'picks'}
+                            </span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            modal.classList.add('active');
+        }
+
+        function closeStatsModal(event) {
+            if (event.target.classList.contains('modal-overlay')) {
+                document.getElementById('statsModal').classList.remove('active');
+            }
+        }
+
+        function closeStatsModalBtn() {
+            document.getElementById('statsModal').classList.remove('active');
+        }
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeKeywordModal();
+                closeStatsModalBtn();
+            }
+        });
+    </script>
+</body>
+</html>
