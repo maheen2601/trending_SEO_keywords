@@ -3248,7 +3248,6 @@
 
 
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -4096,6 +4095,7 @@
             padding: 0 0.5rem;
         }
 
+
         .keyword-card {
             background: var(--bg-secondary);
             border: 1px solid var(--border-color);
@@ -4107,12 +4107,16 @@
             align-items: flex-start;
             gap: 1rem;
         }
+        .keyword-checkbox:hover {
+    border-color: #007bff;
+    background: #e7f1ff;
+}
 
-        .keyword-card:hover {
+        /* .keyword-card:hover {
             background: var(--bg-hover);
             border-color: var(--accent-primary);
             transform: translateY(-2px);
-        }
+        } */
 
         .keyword-card.selected {
             background: rgba(0, 212, 170, 0.1);
@@ -5215,9 +5219,29 @@
         </div>
     </div>
 
+
+    <!-- Team Badge Users Modal -->
+    <div id="usersModal" class="modal-overlay">
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2 id="badgeModalTitle">👥 Users who selected this keyword</h2>
+                <button class="modal-close" onclick="closeUsersModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div id="badgeModalKeyword" style="padding: 0.5rem 1rem; background: var(--bg-tertiary); border-radius: 8px; margin-bottom: 1rem; font-weight: 500;"></div>
+                <div style="margin-bottom: 1rem; color: var(--text-secondary);">
+                    Total: <span id="badgeModalCount" style="color: var(--accent-primary); font-weight: 600;">0</span> selection(s)
+                </div>
+                <div id="badgeModalUsersList" style="max-height: 400px; overflow-y: auto;"></div>
+            </div>
+        </div>
+    </div>
+      
+
+
     <script>
         // Global State
-        const SELECTIONS_PER_PAGE = 40; // Number of items per page
+        const SELECTIONS_PER_PAGE = 20; // Number of items per page
         let selectionsCurrentPage = 1;  // Current page number
 
         let currentUser = null;
@@ -5307,6 +5331,13 @@
             });
             document.getElementById('registerPassword').addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') register();
+            });
+            
+            // Close team badge modal on outside click
+            document.getElementById('usersModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeUsersModal();
+                }
             });
 
             // Restore session from localStorage if available
@@ -5856,7 +5887,7 @@
             'Gossip Herald': { abbr: 'GH', color: '#1abc9c' },    // Teal
             'Hungama': { abbr: 'HG', color: '#e91e63' },           // Pink
             'SEO': { abbr: 'SEO', color: '#486e70' },
-            'Admin': { abbr: 'ADM', color: '#725eae' }
+            'Admin': { abbr: 'ADM', color: '#725eae' }          // Pink
             // ADD MORE TEAMS BELOW (don't forget comma after each line except last)
             // 'New Team': { abbr: 'NT', color: '#hexcode' }
         };
@@ -5934,19 +5965,65 @@
                 const isSelected = selections.some(s => s.user === currentUser?.name && s.keyword === kw.keyword);
                 const teamsSelected = getTeamsForKeyword(kw.keyword);
                 
-                // Generate team badges HTML
-                const teamBadgesHTML = teamsSelected.length > 0 ? `
-                    <div class="team-badges">
-                        ${teamsSelected.map(team => {
-                            const badge = getTeamBadge(team);
-                            return `<span class="team-badge" style="background: ${badge.color};" title="Selected by ${team}">${badge.abbr}</span>`;
-                        }).join('')}
-                    </div>
-                ` : '';
+//                 // Generate team badges HTML
+//                 // const teamBadgesHTML = teamsSelected.length > 0 ? `
+//                 //     <div class="team-badges">
+//                 //         ${teamsSelected.map(team => {
+//                 //             const badge = getTeamBadge(team);
+//                 //             return `<span class="team-badge" style="background: ${badge.color};" title="Selected by ${team}">${badge.abbr}</span>`;
+//                 //         }).join('')}
+//                 //     </div>
+//                 // ` : '';
+
+//                // Generate team badges with user names instead of team names
+// const badgeSelections = selections.filter(s => s.keyword === kw.keyword);
+// const teamBadgesHTML = badgeSelections.length > 0 ? `
+//     <div class="team-badges">
+//         ${badgeSelections.map(s => {
+//             const badge = getTeamBadge(s.team);
+//             return `<span class="team-badge" style="background: ${badge.color};" title="Selected by ${s.user}">${badge.abbr}</span>`;
+//         }).join('')}
+//     </div>
+// ` : '';
+
+
+
+
+// Generate team badges with click event to open modal
+const badgeSelections = selections.filter(s => s.keyword === kw.keyword);
+
+// Get unique teams that selected this keyword
+const uniqueTeams = [...new Set(badgeSelections.map(s => s.team))];
+
+const teamBadgesHTML = uniqueTeams.length > 0 ? `
+    <div class="team-badges">
+        ${uniqueTeams.map(team => {
+            const badge = getTeamBadge(team);
+            const teamUsers = badgeSelections.filter(s => s.team === team);
+            const userNames = teamUsers.map(s => s.user).join(', ');
+            // Store keyword in a data attribute to avoid string escaping issues
+            return `<span 
+                class="team-badge" 
+                style="background: ${badge.color}; cursor:pointer; z-index:10;" 
+                title="Selected by: ${userNames}"
+                data-keyword="${encodeURIComponent(kw.keyword)}"
+                data-team="${encodeURIComponent(team)}"
+                onclick="event.stopPropagation(); openUserModalFromBadge(this)"
+            >
+                ${badge.abbr}
+            </span>`;
+        }).join('')}
+    </div>
+` : '';
+
+
+
+
+
 
                 return `
-                    <div class="keyword-card ${isSelected ? 'selected' : ''} ${teamsSelected.length > 0 ? 'has-selections' : ''}" onclick="toggleKeyword('${kw.keyword.replace(/'/g, "\\'")}')">
-                        <div class="keyword-checkbox"></div>
+                    <div class="keyword-card ${isSelected ? 'selected' : ''} ${teamsSelected.length > 0 ? 'has-selections' : ''}">
+                        <div class="keyword-checkbox" onclick="toggleKeyword('${kw.keyword.replace(/'/g, "\\'")}')"></div>
                         <div class="keyword-info">
                             <div class="keyword-header-row">
                                 <div class="keyword-text">${kw.keyword}${kw.title ? ` <span class="keyword-title">- ${kw.title}</span>` : ''}</div>
@@ -5967,6 +6044,64 @@
             // Render pagination controls
             renderPagination(totalPages, filteredKeywords.length);
         }
+
+// --------------------------------------------------------------------------------------------------------------------------------------------
+function openUserModalFromBadge(element) {
+    const keyword = decodeURIComponent(element.dataset.keyword);
+    const team = decodeURIComponent(element.dataset.team);
+    
+    // Find users directly here
+    const users = selections.filter(s => s.keyword === keyword && s.team === team);
+    
+    console.log('Badge clicked - Keyword:', keyword, 'Team:', team, 'Found:', users);
+    
+    // Update modal header and info
+    const badge = getTeamBadge(team);
+    document.getElementById('badgeModalTitle').innerHTML = `👥 <span style="color: ${badge.color};">${team}</span> Selections`;
+    document.getElementById('badgeModalKeyword').innerHTML = `Keyword: <strong>${keyword}</strong>`;
+    document.getElementById('badgeModalCount').textContent = users.length;
+    
+    // Render users list with unique ID
+    const listEl = document.getElementById('badgeModalUsersList');
+    if (users.length === 0) {
+        listEl.innerHTML = '<div style="text-align: center; padding: 1rem; color: var(--text-muted);">No selections found</div>';
+    } else {
+        listEl.innerHTML = users.map(u => `
+            <div style="display: flex; align-items: center; padding: 0.75rem; background: var(--bg-tertiary); border-radius: 8px; margin-bottom: 0.5rem;">
+                <div style="width: 40px; height: 40px; border-radius: 50%; background: ${badge.color}; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; margin-right: 0.75rem;">
+                    ${u.user.charAt(0).toUpperCase()}
+                </div>
+                <div style="flex: 1;">
+                    <div style="font-weight: 600; color: var(--text-primary);">${u.user}</div>
+                </div>
+                <div style="color: var(--text-secondary); font-size: 0.85rem;">${u.timestamp}</div>
+            </div>
+        `).join('');
+    }
+    
+    document.getElementById('usersModal').classList.add('active');
+}
+
+function openUserModal(keyword, team) {
+    // Legacy function - redirect to badge handler
+    const fakeElement = { dataset: { keyword: encodeURIComponent(keyword), team: encodeURIComponent(team) } };
+    openUserModalFromBadge(fakeElement);
+}
+
+function closeUsersModal() {
+    document.getElementById('usersModal').classList.remove('active');
+}
+
+
+
+
+
+
+function getFilteredModalUsers() {
+    return window.modalUsers || [];
+}
+
+// --------------------------------------------------------------------------------------------------------------------------------------------
 
         function renderPagination(totalPages, totalItems) {
             const container = document.getElementById('keywordsPagination');
@@ -6102,9 +6237,7 @@
 
 //         function renderSelections() {
 //             const tbody = document.getElementById('selectionsTable');
-
-        
-                   
+            
 //             // Update team dropdown
 //             updateTeamFilter();
             
@@ -6217,89 +6350,99 @@
 
 
         function renderSelections() {
-    const tbody = document.getElementById('selectionsTable');
+            const tbody = document.getElementById('selectionsTable');
+
 
             
-    updateTeamFilter(); 
-    // 1️⃣ Apply filters
-    const filteredSelections = getFilteredSelections(); // your existing function
+            updateTeamFilter();
+            // 1️⃣ Apply filters
+            const filteredSelections = getFilteredSelections(); // your existing function
 
-    if (filteredSelections.length === 0) {
-        tbody.innerHTML = `<tr>
-            <td colspan="4">
-                <div class="empty-state">No selections match your filters.</div>
-            </td>
-        </tr>`;
-        document.getElementById('selFilteredCount').textContent = '0';
-        document.getElementById('selTotalCount').textContent = '0';
-        renderSelectionsPagination(0); // no pages
-        return;
-    }
+            if (filteredSelections.length === 0) {
+                tbody.innerHTML = `<tr>
+                    <td colspan="4">
+                        <div class="empty-state">No selections match your filters.</div>
+                    </td>
+                </tr>`;
+                document.getElementById('selFilteredCount').textContent = '0';
+                document.getElementById('selTotalCount').textContent = '0';
+                renderSelectionsPagination(0); // no pages
+                return;
+            }
 
-    // 2️⃣ Group selections by keyword
-    const keywordGroups = {};
-    filteredSelections.forEach(sel => {
-        if (!keywordGroups[sel.keyword]) {
-            keywordGroups[sel.keyword] = {
-                keyword: sel.keyword,
-                count: 0,
-                latestTime: sel.timestamp,
-                latestDate: new Date(sel.timestamp)
-            };
+            // 2️⃣ Group selections by keyword
+            const keywordGroups = {};
+            filteredSelections.forEach(sel => {
+                if (!keywordGroups[sel.keyword]) {
+                    keywordGroups[sel.keyword] = {
+                        keyword: sel.keyword,
+                        count: 0,
+                        latestTime: sel.timestamp,
+                        latestDate: new Date(sel.timestamp)
+                    };
+                }
+                keywordGroups[sel.keyword].count++;
+                const selDate = new Date(sel.timestamp);
+                if (selDate > keywordGroups[sel.keyword].latestDate) {
+                    keywordGroups[sel.keyword].latestTime = sel.timestamp;
+                    keywordGroups[sel.keyword].latestDate = selDate;
+                }
+            });
+
+            let groupedKeywords = Object.values(keywordGroups)
+                .sort((a, b) => b.latestDate - a.latestDate); // sort by latest
+
+            // 3️⃣ Update counts
+            document.getElementById('selFilteredCount').textContent = groupedKeywords.length;
+            document.getElementById('selTotalCount').textContent = Object.keys(
+                selections.reduce((acc, s) => { acc[s.keyword] = true; return acc; }, {})
+            ).length;
+
+            // 4️⃣ Pagination calculations
+            const totalPages = Math.ceil(groupedKeywords.length / SELECTIONS_PER_PAGE);
+            if (selectionsCurrentPage > totalPages) selectionsCurrentPage = 1;
+            const startIndex = (selectionsCurrentPage - 1) * SELECTIONS_PER_PAGE;
+            const endIndex = startIndex + SELECTIONS_PER_PAGE;
+            const paginatedKeywords = groupedKeywords.slice(startIndex, endIndex);
+
+            // 5️⃣ Render table rows version 1 ----------------- add badges instead of count
+            tbody.innerHTML = paginatedKeywords.map((group, index) => `
+                <tr>
+                    <td><span class="row-number">${startIndex + index + 1}</span></td>
+                    <td><span class="keyword-badge keyword-badge-clickable"
+                            onclick="openKeywordModal('${group.keyword.replace(/'/g, "\\'")}')">
+                        ${group.keyword}
+                        </span></td>
+                        
+                    <td>
+        <div class="team-badges">
+            ${[...new Set(
+                selections
+                .filter(s => s.keyword === group.keyword)
+                .map(s => s.team)
+            )].map(team => {
+                const badge = getTeamBadge(team);
+                return `<span class="team-badge" style="background: ${badge.color};" title="Selected by ${team}">${badge.abbr}</span>`;
+            }).join('')}
+        </div>
+        </td>
+
+                    <td><span class="timestamp">${group.latestTime}</span></td>
+                </tr>
+            `).join('');
+
+            // 6️⃣ Render pagination buttons
+            renderSelectionsPagination(totalPages);
         }
-        keywordGroups[sel.keyword].count++;
-        const selDate = new Date(sel.timestamp);
-        if (selDate > keywordGroups[sel.keyword].latestDate) {
-            keywordGroups[sel.keyword].latestTime = sel.timestamp;
-            keywordGroups[sel.keyword].latestDate = selDate;
-        }
-    });
 
-    let groupedKeywords = Object.values(keywordGroups)
-        .sort((a, b) => b.latestDate - a.latestDate); // sort by latest
 
-    // 3️⃣ Update counts
-    document.getElementById('selFilteredCount').textContent = groupedKeywords.length;
-    document.getElementById('selTotalCount').textContent = Object.keys(
-        selections.reduce((acc, s) => { acc[s.keyword] = true; return acc; }, {})
-    ).length;
 
-    // 4️⃣ Pagination calculations
-    const totalPages = Math.ceil(groupedKeywords.length / SELECTIONS_PER_PAGE);
-    if (selectionsCurrentPage > totalPages) selectionsCurrentPage = 1;
-    const startIndex = (selectionsCurrentPage - 1) * SELECTIONS_PER_PAGE;
-    const endIndex = startIndex + SELECTIONS_PER_PAGE;
-    const paginatedKeywords = groupedKeywords.slice(startIndex, endIndex);
 
-    // 5️⃣ Render table rows version 1 ----------------- add badges instead of count
-    tbody.innerHTML = paginatedKeywords.map((group, index) => `
-        <tr>
-            <td><span class="row-number">${startIndex + index + 1}</span></td>
-            <td><span class="keyword-badge keyword-badge-clickable"
-                      onclick="openKeywordModal('${group.keyword.replace(/'/g, "\\'")}')">
-                  ${group.keyword}
-                </span></td>
-                
-            <td>
-  <div class="team-badges">
-    ${[...new Set(
-        selections
-          .filter(s => s.keyword === group.keyword)
-          .map(s => s.team)
-      )].map(team => {
-          const badge = getTeamBadge(team);
-          return `<span class="team-badge" style="background: ${badge.color};" title="Selected by ${team}">${badge.abbr}</span>`;
-      }).join('')}
-  </div>
-</td>
 
-            <td><span class="timestamp">${group.latestTime}</span></td>
-        </tr>
-    `).join('');
 
-    // 6️⃣ Render pagination buttons
-    renderSelectionsPagination(totalPages);
-}
+
+
+        
 // function renderSelectionsPagination(totalPages) {
 //     const container = document.getElementById('selectionsPagination');
 //     if (!container || totalPages <= 1) {
@@ -6330,7 +6473,6 @@
 
     
 // }
-
 
 
 
@@ -6390,15 +6532,13 @@
 
 
 
-            
-   
 
 
-function goToSelectionsPage(page) {
-    selectionsCurrentPage = page;
-    renderSelections();
-    document.getElementById('selectionsTable').scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
+        function goToSelectionsPage(page) {
+            selectionsCurrentPage = page;
+            renderSelections();
+            document.getElementById('selectionsTable').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
 
 
 
@@ -6577,6 +6717,33 @@ function goToSelectionsPage(page) {
             });
         }
 
+        // function renderModalUsers() {
+        //     const modalUsersList = document.getElementById('modalUsersList');
+        //     const modalFilteredUsers = document.getElementById('modalFilteredUsers');
+            
+        //     const filteredUsers = getFilteredModalUsers();
+        //     modalFilteredUsers.textContent = filteredUsers.length;
+            
+        //     if (filteredUsers.length === 0) {
+        //         modalUsersList.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-muted);">No users match your filters.</div>';
+        //         return;
+        //     }
+            
+        //     modalUsersList.innerHTML = filteredUsers.map(user => `
+        //         <div class="modal-user-item">
+        //             <div class="modal-user-avatar">${user.user.charAt(0).toUpperCase()}</div>
+        //             <div class="modal-user-info">
+        //                 <div class="modal-user-name">${user.user}</div>
+        //                 <div class="modal-user-team">${user.team}</div>
+        //             </div>
+        //             <div class="modal-user-time">${user.timestamp}</div>
+        //         </div>
+        //     `).join('');
+        // }
+
+
+
+
         function renderModalUsers() {
             const modalUsersList = document.getElementById('modalUsersList');
             const modalFilteredUsers = document.getElementById('modalFilteredUsers');
@@ -6585,21 +6752,31 @@ function goToSelectionsPage(page) {
             modalFilteredUsers.textContent = filteredUsers.length;
             
             if (filteredUsers.length === 0) {
-                modalUsersList.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-muted);">No users match your filters.</div>';
+                modalUsersList.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-muted);">No selections from this team for this keyword.</div>';
                 return;
             }
             
-            modalUsersList.innerHTML = filteredUsers.map(user => `
-                <div class="modal-user-item">
-                    <div class="modal-user-avatar">${user.user.charAt(0).toUpperCase()}</div>
-                    <div class="modal-user-info">
-                        <div class="modal-user-name">${user.user}</div>
-                        <div class="modal-user-team">${user.team}</div>
+            // Render each user with theme-aware styling
+            modalUsersList.innerHTML = filteredUsers.map(user => {
+                const badge = getTeamBadge(user.team);
+                return `
+                    <div style="display: flex; align-items: center; padding: 0.75rem; background: var(--bg-tertiary); border-radius: 8px; margin-bottom: 0.5rem;">
+                        <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, ${badge.color}, var(--accent-secondary)); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; margin-right: 0.75rem;">
+                            ${user.user.charAt(0).toUpperCase()}
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; color: var(--text-primary);">${user.user}</div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary);">${user.team}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 0.8rem; color: var(--accent-primary);">${user.timestamp.split(' ')[0]}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">${user.timestamp.split(' ')[1] || ''}</div>
+                        </div>
                     </div>
-                    <div class="modal-user-time">${user.timestamp}</div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
+
 
         function applyModalFilters() {
             renderModalUsers();
@@ -6731,7 +6908,10 @@ function goToSelectionsPage(page) {
                 closeStatsModalBtn();
             }
         });
+
+        
     </script>
 </body>
 </html>
+
 
