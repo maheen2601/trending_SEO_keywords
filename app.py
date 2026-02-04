@@ -1,5 +1,7 @@
 import eventlet
 eventlet.monkey_patch()
+
+
 import sys
 import io
 # Fix Windows console encoding for Unicode
@@ -35,7 +37,6 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 
 # ------------------ Database Configuration ------------------
 DB_URL = "postgresql://neondb_owner:npg_7SjyKhDinEv8@ep-young-term-a5zyo5in-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require"
-DB_URL = os.environ.get("DATABASE_URL")
 
 # ------------------ In-Memory Cache (synced with DB) ------------------
 online_users = set()
@@ -52,6 +53,7 @@ if GOOGLE_CREDENTIALS_JSON:
     CREDS_FILE = "/tmp/google_credentials.json"
     with open(CREDS_FILE, "w") as f:
         f.write(GOOGLE_CREDENTIALS_JSON)
+
 
 # ------------------ Password Hashing ------------------
 def hash_password(password):
@@ -107,6 +109,47 @@ def init_database():
                 selected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE (username, keyword)
             );
+        """)
+        
+        # Create Google Trends flags table - tracks who marked keywords as "already from Google Trends"
+        # Team-specific: each team only sees their own flags
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS google_trends_flags (
+                id SERIAL PRIMARY KEY,
+                keyword TEXT NOT NULL,
+                flagged_by TEXT NOT NULL,
+                team TEXT NOT NULL DEFAULT '',
+                flagged_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE (keyword, team)
+            );
+        """)
+        
+        # Migration: Add team column and update constraints (for existing databases)
+        cur.execute("""
+            DO $$
+            BEGIN
+                -- Add team column if not exists
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                               WHERE table_name='google_trends_flags' AND column_name='team') THEN
+                    ALTER TABLE google_trends_flags ADD COLUMN team TEXT NOT NULL DEFAULT '';
+                END IF;
+                
+                -- Drop old constraints
+                IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'google_trends_flags_keyword_key') THEN
+                    ALTER TABLE google_trends_flags DROP CONSTRAINT google_trends_flags_keyword_key;
+                END IF;
+                IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'google_trends_flags_keyword_flagged_by_key') THEN
+                    ALTER TABLE google_trends_flags DROP CONSTRAINT google_trends_flags_keyword_flagged_by_key;
+                END IF;
+                
+                -- Add new constraint (one flag per keyword per team)
+                IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'google_trends_flags_keyword_team_key') THEN
+                    ALTER TABLE google_trends_flags ADD CONSTRAINT google_trends_flags_keyword_team_key 
+                        UNIQUE (keyword, team);
+                END IF;
+            EXCEPTION WHEN others THEN
+                NULL;
+            END $$;
         """)
         
         conn.commit()
@@ -360,6 +403,99 @@ def load_selections_cache():
     cache_loaded = True
     print(f"[Cache] Loaded {len(selections_cache)} selections")
 
+# ------------------ Google Trends Flags Functions ------------------
+# Cache for Google Trends flags
+trends_flags_cache = {}
+trends_cache_loaded = False
+
+def db_get_trends_flags_for_team(team):
+    """Get Google Trends flags for a specific team - returns {keyword: flag_info}"""
+    conn = None
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        cur.execute(
+            """SELECT keyword, flagged_by, flagged_at 
+               FROM google_trends_flags
+               WHERE team = %s
+               ORDER BY flagged_at DESC""",
+            (team,)
+        )
+        rows = cur.fetchall()
+        
+        # One flag per keyword per team
+        flags = {}
+        for row in rows:
+            flags[row[0]] = {
+                "flagged_by": row[1],
+                "flagged_at": to_pakistan_time(row[2]),
+                "team": team
+            }
+        return flags
+        
+    except Exception as e:
+        print(f"[DB] Get trends flags error: {e}")
+        return {}
+    finally:
+        if conn:
+            cur.close()
+            conn.close()
+
+def db_toggle_trends_flag(keyword, username, team):
+    """Toggle Google Trends flag for a team - one flag per keyword per team"""
+    conn = None
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        # Check if this TEAM already flagged this keyword
+        cur.execute(
+            "SELECT id, flagged_by FROM google_trends_flags WHERE keyword = %s AND team = %s",
+            (keyword, team)
+        )
+        existing = cur.fetchone()
+        
+        if existing:
+            # Team's flag exists - remove it
+            cur.execute(
+                "DELETE FROM google_trends_flags WHERE keyword = %s AND team = %s",
+                (keyword, team)
+            )
+            action = "unflagged"
+            flag_info = None
+        else:
+            # Team hasn't flagged yet, so add their flag
+            cur.execute(
+                "INSERT INTO google_trends_flags (keyword, flagged_by, team) VALUES (%s, %s, %s) RETURNING flagged_at",
+                (keyword, username, team)
+            )
+            flagged_at = cur.fetchone()[0]
+            action = "flagged"
+            flag_info = {
+                "flagged_by": username,
+                "flagged_at": to_pakistan_time(flagged_at),
+                "team": team
+            }
+        
+        conn.commit()
+        
+        return action, flag_info, team
+        
+    except Exception as e:
+        print(f"[DB] Toggle trends flag error: {e}")
+        return "error", None, team
+    finally:
+        if conn:
+            cur.close()
+            conn.close()
+
+def load_trends_flags_cache():
+    """Note: Trends flags are now team-specific, loaded on demand per team"""
+    global trends_cache_loaded
+    trends_cache_loaded = True
+    print(f"[Cache] Google Trends flags are team-specific (loaded per team request)")
+
 # ------------------ Admin Database Functions ------------------
 def db_get_all_users():
     """Get all users with their stats"""
@@ -602,14 +738,14 @@ def get_google_sheet_data():
         print(f"[SHEET] Checking for credentials file: {CREDS_FILE}", flush=True)
         print(f"[SHEET] Credentials file exists: {os.path.exists(CREDS_FILE)}", flush=True)
         
-        if not CREDS_FILE or not os.path.exists(CREDS_FILE):
+        if not os.path.exists(CREDS_FILE):
             # Sample data with separate date and time columns
             return [
-                {"id": 1, "keyword": "Sample Keyword 1", "title": "Breaking News Story", "remarks": "Hot topic", "category": "Tech", "hours_ago": "2h ago", "date": "05-01-2026", "time": "14:30:00"},
-                {"id": 2, "keyword": "Sample Keyword 2", "title": "Latest Update", "remarks": "Trending", "category": "News", "hours_ago": "4h ago", "date": "05-01-2026", "time": "12:30:00"},
-                {"id": 3, "keyword": "Sample Keyword 3", "title": "Match Highlights", "remarks": "Popular", "category": "Sports", "hours_ago": "1h ago", "date": "06-01-2026", "time": "15:30:00"},
-                {"id": 4, "keyword": "Sample Keyword 4", "title": "Celebrity News", "remarks": "Viral", "category": "Entertainment", "hours_ago": "6h ago", "date": "06-01-2026", "time": "10:30:00"},
-                {"id": 5, "keyword": "Sample Keyword 5", "title": "Market Analysis", "remarks": "Rising", "category": "Business", "hours_ago": "3h ago", "date": "07-01-2026", "time": "13:30:00"},
+                {"id": 1, "keyword": "Sample Keyword 1", "title": "Breaking News Story", "remarks": "Hot topic", "category": "Tech", "hours_ago": "2h ago", "date": "05-01-2026", "time": "14:30:00", "seo": "Moiz"},
+                {"id": 2, "keyword": "Sample Keyword 2", "title": "Latest Update", "remarks": "Trending", "category": "News", "hours_ago": "4h ago", "date": "05-01-2026", "time": "12:30:00", "seo": "Taha"},
+                {"id": 3, "keyword": "Sample Keyword 3", "title": "Match Highlights", "remarks": "Popular", "category": "Sports", "hours_ago": "1h ago", "date": "06-01-2026", "time": "15:30:00", "seo": "Moiz"},
+                {"id": 4, "keyword": "Sample Keyword 4", "title": "Celebrity News", "remarks": "Viral", "category": "Entertainment", "hours_ago": "6h ago", "date": "06-01-2026", "time": "10:30:00", "seo": "Salman"},
+                {"id": 5, "keyword": "Sample Keyword 5", "title": "Market Analysis", "remarks": "Rising", "category": "Business", "hours_ago": "3h ago", "date": "07-01-2026", "time": "13:30:00", "seo": "Taha"},
             ]
         
         print("[SHEET] Loading credentials...", flush=True)
@@ -649,6 +785,9 @@ def get_google_sheet_data():
             date_val = normalized.get("date") or ""
             time_val = normalized.get("time") or ""
             
+            # SEO column - person who posted the keyword
+            seo_val = normalized.get("seos") or normalized.get("seo") or ""
+            
             keywords.append({
                 "id": i + 1,
                 "keyword": str(keyword),
@@ -657,7 +796,8 @@ def get_google_sheet_data():
                 "category": str(category),
                 "hours_ago": str(hours_ago),
                 "date": str(date_val),
-                "time": str(time_val)
+                "time": str(time_val),
+                "seo": str(seo_val)
             })
         return keywords
     except Exception as e:
@@ -665,9 +805,9 @@ def get_google_sheet_data():
         import traceback
         traceback.print_exc()
         return [
-            {"id": 1, "keyword": "Trending Topic 1", "title": "", "remarks": "", "category": "General", "hours_ago": "", "date": "", "time": ""},
-            {"id": 2, "keyword": "Trending Topic 2", "title": "", "remarks": "", "category": "General", "hours_ago": "", "date": "", "time": ""},
-            {"id": 3, "keyword": "Trending Topic 3", "title": "", "remarks": "", "category": "General", "hours_ago": "", "date": "", "time": ""},
+            {"id": 1, "keyword": "Trending Topic 1", "title": "", "remarks": "", "category": "General", "hours_ago": "", "date": "", "time": "", "seo": ""},
+            {"id": 2, "keyword": "Trending Topic 2", "title": "", "remarks": "", "category": "General", "hours_ago": "", "date": "", "time": "", "seo": ""},
+            {"id": 3, "keyword": "Trending Topic 3", "title": "", "remarks": "", "category": "General", "hours_ago": "", "date": "", "time": "", "seo": ""},
         ]
 
 # ------------------ Routes ------------------
@@ -744,6 +884,17 @@ def get_selections():
     if not cache_loaded:
         load_selections_cache()
     return jsonify({"selections": selections_cache})
+
+@app.route('/api/trends-flags', methods=['GET'])
+def get_trends_flags():
+    """Get Google Trends flags for a specific team"""
+    team = request.args.get('team', '')
+    if not team:
+        return jsonify({"flags": {}, "error": "Team parameter required"})
+    
+    # Fetch flags for this team only
+    flags = db_get_trends_flags_for_team(team)
+    return jsonify({"flags": flags, "team": team})
 
 @app.route('/api/refresh-cache', methods=['POST'])
 def refresh_cache():
@@ -852,6 +1003,111 @@ def set_user_admin():
     result = db_set_admin(target_user, is_admin)
     return jsonify(result)
 
+@app.route('/api/admin/seo-stats', methods=['GET'])
+def get_seo_stats():
+    """Get SEO performance statistics - keywords posted vs selected"""
+    from_date = request.args.get('from_date')
+    to_date = request.args.get('to_date')
+    
+    # Get keywords from Google Sheet (includes SEO column)
+    keywords_data = get_google_sheet_data()
+    
+    # Get all selections
+    global selections_cache, cache_loaded
+    if not cache_loaded:
+        load_selections_cache()
+    all_selections = selections_cache
+    
+    # Create a set of selected keywords for fast lookup
+    selected_keywords = set(s['keyword'] for s in all_selections)
+    
+    # Parse date filters
+    filter_from = None
+    filter_to = None
+    
+    if from_date:
+        try:
+            filter_from = datetime.strptime(from_date, '%Y-%m-%d').date()
+        except:
+            pass
+    
+    if to_date:
+        try:
+            filter_to = datetime.strptime(to_date, '%Y-%m-%d').date()
+        except:
+            pass
+    
+    # Get today's date in PKT for default filtering
+    pkt = timezone(timedelta(hours=5))
+    today_pkt = datetime.now(pkt).date()
+    
+    # If no date filter, default to today
+    if not filter_from and not filter_to:
+        filter_from = today_pkt
+        filter_to = today_pkt
+    
+    # Aggregate by SEO
+    seo_stats = {}
+    
+    for kw in keywords_data:
+        seo_name = kw.get('seo', '').strip()
+        if not seo_name:
+            continue
+        
+        # Parse keyword date (format: DD-MM-YYYY or similar)
+        kw_date_str = kw.get('date', '').strip()
+        kw_date = None
+        
+        if kw_date_str:
+            for fmt in ['%d-%m-%Y', '%d/%m/%Y', '%Y-%m-%d', '%d-%m-%y', '%d/%m/%y']:
+                try:
+                    kw_date = datetime.strptime(kw_date_str, fmt).date()
+                    break
+                except:
+                    continue
+        
+        # Apply date filter
+        if filter_from and kw_date and kw_date < filter_from:
+            continue
+        if filter_to and kw_date and kw_date > filter_to:
+            continue
+        
+        # Initialize SEO entry if not exists
+        if seo_name not in seo_stats:
+            seo_stats[seo_name] = {
+                'seo': seo_name,
+                'total_posted': 0,
+                'total_selected': 0,
+                'keywords': []
+            }
+        
+        seo_stats[seo_name]['total_posted'] += 1
+        
+        # Check if keyword was selected
+        keyword_text = kw.get('keyword', '')
+        is_selected = keyword_text in selected_keywords
+        
+        if is_selected:
+            seo_stats[seo_name]['total_selected'] += 1
+        
+        seo_stats[seo_name]['keywords'].append({
+            'keyword': keyword_text,
+            'title': kw.get('title', ''),
+            'date': kw_date_str,
+            'selected': is_selected
+        })
+    
+    # Convert to list and sort by total_posted descending
+    seo_list = list(seo_stats.values())
+    seo_list.sort(key=lambda x: x['total_posted'], reverse=True)
+    
+    return jsonify({
+        'seo_stats': seo_list,
+        'filter_from': filter_from.isoformat() if filter_from else None,
+        'filter_to': filter_to.isoformat() if filter_to else None,
+        'total_seos': len(seo_list)
+    })
+
 @app.route('/api/admin/today-selections', methods=['GET'])
 def get_today_selections():
     """Get all selections made today"""
@@ -947,6 +1203,28 @@ def handle_keyword_selection(data):
         "keyword": keyword
     }, broadcast=True)
 
+@socketio.on('toggle_trends_flag')
+def handle_trends_flag(data):
+    """Handle toggling Google Trends flag for a keyword (team-specific)"""
+    username = data.get('username')
+    keyword = data.get('keyword')
+    team = data.get('team')
+    
+    if not username or not keyword or not team:
+        return
+    
+    # Toggle the flag for this team
+    action, flag_info, flag_team = db_toggle_trends_flag(keyword, username, team)
+    
+    # Broadcast to all clients (clients will filter by their team)
+    emit('trends_flag_update', {
+        "keyword": keyword,
+        "action": action,
+        "flag_info": flag_info,  # Flag info (or None if unflagged)
+        "team": flag_team,  # Team that flagged/unflagged
+        "triggered_by": username
+    }, broadcast=True)
+
 @socketio.on('refresh_keywords')
 def handle_refresh_keywords():
     keywords = get_google_sheet_data()
@@ -963,6 +1241,9 @@ if __name__ == '__main__':
     
     # Load selections cache
     load_selections_cache()
+    
+    # Load Google Trends flags cache
+    load_trends_flags_cache()
     
     print("Starting Keyword Selection App...")
     print("Open http://localhost:5000 in your browser")
