@@ -3686,8 +3686,6 @@ function getFilteredModalUsers() {
 
 
 
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6411,11 +6409,27 @@ function getFilteredModalUsers() {
             };
         }
 
-        function getTeamsForKeyword(keyword) {
-            // Get unique teams that have selected this keyword
+        // Unique key for a keyword row (so duplicate keyword text on different rows get separate badges)
+        function getKeywordKey(kw) {
+            const k = (kw && kw.keyword) || '';
+            const d = (kw && kw.date) || '';
+            const t = (kw && kw.time) || '';
+            const id = (kw && (kw.id != null)) ? String(kw.id) : '';
+            return k + '\u241F' + d + '\u241F' + t + '\u241F' + id;
+        }
+
+        function selectionMatchesRow(s, key, keywordText) {
+            const selKey = s.keyword_key || s.keyword;
+            if (selKey === key) return true;
+            if (!key.includes('\u241F') || selKey === s.keyword) return s.keyword === keywordText;
+            return false;
+        }
+
+        function getTeamsForKeyword(keywordKey, keywordText) {
+            const text = keywordText != null ? keywordText : keywordKey;
             const teams = [...new Set(
                 selections
-                    .filter(s => s.keyword === keyword)
+                    .filter(s => selectionMatchesRow(s, keywordKey, text))
                     .map(s => s.team)
             )];
             return teams;
@@ -6468,14 +6482,15 @@ function getFilteredModalUsers() {
             const paginatedKeywords = filteredKeywords.slice(startIndex, endIndex);
 
             // Render keywords for current page
+            const rowKey = (kw) => getKeywordKey(kw);
             grid.innerHTML = paginatedKeywords.map(kw => {
-                const isSelected = selections.some(s => s.user === currentUser?.name && s.keyword === kw.keyword);
-                const teamsSelected = getTeamsForKeyword(kw.keyword);
+                const key = rowKey(kw);
+                const isSelected = selections.some(s => s.user === currentUser?.name && selectionMatchesRow(s, key, kw.keyword));
+                const teamsSelected = getTeamsForKeyword(key, kw.keyword);
 
-                // Generate team badges with click event to open modal
-                const badgeSelections = selections.filter(s => s.keyword === kw.keyword);
+                // Generate team badges for this row only (by keyword_key so duplicate keywords don't share badges)
+                const badgeSelections = selections.filter(s => selectionMatchesRow(s, key, kw.keyword));
 
-                // Get unique teams that selected this keyword
                 const uniqueTeams = [...new Set(badgeSelections.map(s => s.team))];
 
                 const teamBadgesHTML = uniqueTeams.length > 0 ? `
@@ -6484,12 +6499,12 @@ function getFilteredModalUsers() {
                             const badge = getTeamBadge(team);
                             const teamUsers = badgeSelections.filter(s => s.team === team);
                             const userNames = teamUsers.map(s => s.user).join(', ');
-                            // Store keyword in a data attribute to avoid string escaping issues
                             return `<span 
                                 class="team-badge" 
                                 style="background: ${badge.color}; cursor:pointer; z-index:10;" 
                                 title="Selected by: ${userNames}"
                                 data-keyword="${encodeURIComponent(kw.keyword)}"
+                                data-keyword-key="${encodeURIComponent(key)}"
                                 data-team="${encodeURIComponent(team)}"
                                 onclick="event.stopPropagation(); openUserModalFromBadge(this)"
                             >
@@ -6506,7 +6521,7 @@ function getFilteredModalUsers() {
 
                 return `
                     <div class="keyword-card ${isSelected ? 'selected' : ''} ${teamsSelected.length > 0 ? 'has-selections' : ''}">
-                        <div class="keyword-checkbox" onclick="toggleKeyword('${kw.keyword.replace(/'/g, "\\'")}')"></div>
+                        <div class="keyword-checkbox" data-keyword="${encodeURIComponent(kw.keyword)}" data-keyword-key="${encodeURIComponent(key)}" onclick="toggleKeyword(this)"></div>
                         <div class="keyword-info">
                             <div class="keyword-header-row">
                                 <div class="keyword-text">${kw.keyword}${kw.title ? ` <span class="keyword-title">- ${kw.title}</span>` : ''}</div>
@@ -6574,11 +6589,14 @@ function getFilteredModalUsers() {
 
 // --------------------------------------------------------------------------------------------------------------------------------------------
 function openUserModalFromBadge(element) {
-    const keyword = decodeURIComponent(element.dataset.keyword);
-    const team = decodeURIComponent(element.dataset.team);
+    const keyword = decodeURIComponent(element.dataset.keyword || '');
+    const keywordKey = decodeURIComponent(element.dataset.keywordKey || '') || keyword;
+    const team = decodeURIComponent(element.dataset.team || '');
     
-    // Find users who selected this keyword from this team
-    const users = selections.filter(s => s.keyword === keyword && s.team === team);
+    const users = selections.filter(s => s.team === team && (
+        (s.keyword_key || s.keyword) === keywordKey ||
+        (s.keyword_key === s.keyword && s.keyword === keyword)
+    ));
     
     console.log('Badge clicked - Keyword:', keyword, 'Team:', team, 'Found:', users);
     
@@ -6897,32 +6915,33 @@ function getFilteredModalUsers() {
                 return;
             }
 
-            // 2️⃣ Group selections by keyword
+            // 2️⃣ Group selections by keyword_key (so same keyword on different rows stays separate)
             const keywordGroups = {};
             filteredSelections.forEach(sel => {
-                if (!keywordGroups[sel.keyword]) {
-                    keywordGroups[sel.keyword] = {
+                const key = sel.keyword_key || sel.keyword;
+                if (!keywordGroups[key]) {
+                    keywordGroups[key] = {
                         keyword: sel.keyword,
+                        keyword_key: key,
                         count: 0,
                         latestTime: sel.timestamp,
                         latestDate: new Date(sel.timestamp)
                     };
                 }
-                keywordGroups[sel.keyword].count++;
+                keywordGroups[key].count++;
                 const selDate = new Date(sel.timestamp);
-                if (selDate > keywordGroups[sel.keyword].latestDate) {
-                    keywordGroups[sel.keyword].latestTime = sel.timestamp;
-                    keywordGroups[sel.keyword].latestDate = selDate;
+                if (selDate > keywordGroups[key].latestDate) {
+                    keywordGroups[key].latestTime = sel.timestamp;
+                    keywordGroups[key].latestDate = selDate;
                 }
             });
 
             let groupedKeywords = Object.values(keywordGroups)
-                .sort((a, b) => b.latestDate - a.latestDate); // sort by latest
+                .sort((a, b) => b.latestDate - a.latestDate);
 
-            // 3️⃣ Update counts
             document.getElementById('selFilteredCount').textContent = groupedKeywords.length;
             document.getElementById('selTotalCount').textContent = Object.keys(
-                selections.reduce((acc, s) => { acc[s.keyword] = true; return acc; }, {})
+                selections.reduce((acc, s) => { acc[s.keyword_key || s.keyword] = true; return acc; }, {})
             ).length;
 
             // 4️⃣ Pagination calculations
@@ -6932,7 +6951,7 @@ function getFilteredModalUsers() {
             const endIndex = startIndex + SELECTIONS_PER_PAGE;
             const paginatedKeywords = groupedKeywords.slice(startIndex, endIndex);
 
-            // 5️⃣ Render table rows version 1 ----------------- add badges instead of count
+            // 5️⃣ Render table rows — badges by keyword_key so duplicate keywords show correct row
             tbody.innerHTML = paginatedKeywords.map((group, index) => `
                 <tr>
                     <td><span class="row-number">${startIndex + index + 1}</span></td>
@@ -6945,7 +6964,7 @@ function getFilteredModalUsers() {
         <div class="team-badges">
             ${[...new Set(
                 selections
-                .filter(s => s.keyword === group.keyword)
+                .filter(s => (s.keyword_key || s.keyword) === group.keyword_key)
                 .map(s => s.team)
             )].map(team => {
                 const badge = getTeamBadge(team);
@@ -7071,77 +7090,81 @@ function getFilteredModalUsers() {
 
 
         function updateStats() {
-            // Check if any filter is applied
-            const hasFiltersApplied = isAnyFilterApplied();
+            // Check for date filter specifically
+            const fromDateFilter = document.getElementById('filterFromDate')?.value || '';
+            const toDateFilter = document.getElementById('filterToDate')?.value || '';
+            const hasDateFilter = fromDateFilter !== '' || toDateFilter !== '';
             
-            // Get the filtered keywords list
-            const filteredKeywords = getFilteredKeywords();
-            const filteredKeywordNames = filteredKeywords.map(k => k.keyword);
+            // Get today's date for comparison (YYYY-MM-DD format)
+            const today = new Date();
+            const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
             
-            // Filter selections to only include those matching filtered keywords
-            const filteredSelections = selections.filter(s => filteredKeywordNames.includes(s.keyword));
+            // Helper to extract date from timestamp (format: "YYYY-MM-DD HH:MM:SS")
+            function getDateFromTimestamp(timestamp) {
+                if (!timestamp) return '';
+                return timestamp.split(' ')[0]; // Get "YYYY-MM-DD" part
+            }
             
-            // Total selections - show today's by default, filtered when filter applied
+            // Helper to check if selection is within date range
+            function isSelectionInDateRange(sel) {
+                const selDate = getDateFromTimestamp(sel.timestamp);
+                if (!selDate) return false;
+                
+                if (hasDateFilter) {
+                    // Apply date filter
+                    if (fromDateFilter && selDate < fromDateFilter) return false;
+                    if (toDateFilter && selDate > toDateFilter) return false;
+                    return true;
+                } else {
+                    // Default: show today's selections only
+                    return selDate === todayStr;
+                }
+            }
+            
+            // Total selections - show today's by default, filtered when date filter applied
             const totalSelectionsLabel = document.getElementById('totalSelectionsLabel');
-            if (hasFiltersApplied) {
-                document.getElementById('totalSelections').textContent = filteredSelections.length;
-                if (totalSelectionsLabel) totalSelectionsLabel.textContent = 'Filtered Selections';
-            } else {
-                document.getElementById('totalSelections').textContent = getTodaysSelectionsCount();
-                if (totalSelectionsLabel) totalSelectionsLabel.textContent = "Today's Selections";
+            const totalSelectionsCount = selections.filter(s => isSelectionInDateRange(s)).length;
+            document.getElementById('totalSelections').textContent = totalSelectionsCount;
+            if (totalSelectionsLabel) {
+                totalSelectionsLabel.textContent = hasDateFilter ? 'Filtered Selections' : "Today's Selections";
             }
             
-            // Your selections count (only for filtered keywords if filter applied, else today's)
-            let myCount;
-            if (hasFiltersApplied) {
-                myCount = filteredSelections.filter(s => s.user === currentUser?.name).length;
-            } else {
-                // Today's selections by current user
-                const today = new Date();
-                const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-                myCount = selections.filter(s => {
-                    if (s.user !== currentUser?.name) return false;
-                    if (!s.timestamp) return false;
-                    const selDate = new Date(s.timestamp);
-                    const selDateStr = `${selDate.getFullYear()}-${String(selDate.getMonth() + 1).padStart(2, '0')}-${String(selDate.getDate()).padStart(2, '0')}`;
-                    return selDateStr === todayStr;
-                }).length;
-            }
+            // Your selections count (filtered by date)
+            const myCount = selections.filter(s => 
+                s.user === currentUser?.name && isSelectionInDateRange(s)
+            ).length;
             document.getElementById('mySelections').textContent = myCount;
             
-            // Team selections count (only for filtered keywords if filter applied, else today's)
-            let teamCount;
-            if (hasFiltersApplied) {
-                teamCount = filteredSelections.filter(s => s.team === currentUser?.team).length;
-            } else {
-                // Today's selections by team
-                const today = new Date();
-                const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-                teamCount = selections.filter(s => {
-                    if (s.team !== currentUser?.team) return false;
-                    if (!s.timestamp) return false;
-                    const selDate = new Date(s.timestamp);
-                    const selDateStr = `${selDate.getFullYear()}-${String(selDate.getMonth() + 1).padStart(2, '0')}-${String(selDate.getDate()).padStart(2, '0')}`;
-                    return selDateStr === todayStr;
-                }).length;
+            // Update "Your Selections" label
+            const mySelectionsLabel = document.querySelector('#mySelections')?.parentElement?.querySelector('.stat-label');
+            if (mySelectionsLabel) {
+                mySelectionsLabel.textContent = hasDateFilter ? 'Your Filtered' : 'Your Today';
             }
+            
+            // Team selections count (filtered by date)
+            const teamCount = selections.filter(s => 
+                s.team === currentUser?.team && isSelectionInDateRange(s)
+            ).length;
             document.getElementById('teamSelections').textContent = teamCount;
             
-            // Update team name label
+            // Update team label
             const teamNameLabel = document.getElementById('teamNameLabel');
             if (teamNameLabel && currentUser?.team) {
-                teamNameLabel.textContent = currentUser.team;
+                const prefix = hasDateFilter ? '' : "Today's ";
+                teamNameLabel.textContent = `${prefix}${currentUser.team}`;
             }
         }
 
-        // Actions
-        function toggleKeyword(keyword) {
+        // Actions (element = keyword-checkbox div with data-keyword and data-keyword-key)
+        function toggleKeyword(element) {
             if (!currentUser) return;
-
+            const keyword = decodeURIComponent(element.dataset.keyword || '');
+            const keywordKey = decodeURIComponent(element.dataset.keywordKey || '') || keyword;
             socket.emit('select_keyword', {
                 username: currentUser.name,
                 team: currentUser.team,
-                keyword: keyword
+                keyword: keyword,
+                keyword_key: keywordKey
             });
         }
 
@@ -7339,23 +7362,51 @@ function getFilteredModalUsers() {
             const keywordsEl = document.getElementById('statsModalKeywords');
             const listEl = document.getElementById('statsModalList');
 
-            // Get filtered keywords for context
-            const filteredKeywords = getFilteredKeywords();
-            const filteredKeywordNames = filteredKeywords.map(k => k.keyword);
+            // Check if date filter is applied
+            const fromDateFilter = document.getElementById('filterFromDate')?.value || '';
+            const toDateFilter = document.getElementById('filterToDate')?.value || '';
+            const hasDateFilter = fromDateFilter !== '' || toDateFilter !== '';
             
-            // Filter selections based on type
+            // Get today's date for comparison (YYYY-MM-DD format)
+            const today = new Date();
+            const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+            
+            // Helper to extract date from timestamp (format: "YYYY-MM-DD HH:MM:SS")
+            function getDateFromTimestamp(timestamp) {
+                if (!timestamp) return '';
+                return timestamp.split(' ')[0]; // Get "YYYY-MM-DD" part
+            }
+            
+            // Helper to check if selection is within date range
+            function isSelectionInDateRange(sel) {
+                const selDate = getDateFromTimestamp(sel.timestamp);
+                if (!selDate) return false;
+                
+                if (hasDateFilter) {
+                    // Apply date filter
+                    if (fromDateFilter && selDate < fromDateFilter) return false;
+                    if (toDateFilter && selDate > toDateFilter) return false;
+                    return true;
+                } else {
+                    // Default: show today's selections only
+                    return selDate === todayStr;
+                }
+            }
+            
+            // Determine title based on filter
+            let dateLabel = hasDateFilter ? 'Filtered' : "Today's";
+            
+            // Filter selections based on type AND date
             let filteredSelections;
             if (type === 'your') {
-                titleEl.textContent = `Your Selections`;
+                titleEl.textContent = `${dateLabel} Your Selections`;
                 filteredSelections = selections.filter(s => 
-                    s.user === currentUser?.name && 
-                    filteredKeywordNames.includes(s.keyword)
+                    s.user === currentUser?.name && isSelectionInDateRange(s)
                 );
             } else if (type === 'team') {
-                titleEl.textContent = `Selections by ${currentUser?.team || 'Team'}`;
+                titleEl.textContent = `${dateLabel} Selections by ${currentUser?.team || 'Team'}`;
                 filteredSelections = selections.filter(s => 
-                    s.team === currentUser?.team && 
-                    filteredKeywordNames.includes(s.keyword)
+                    s.team === currentUser?.team && isSelectionInDateRange(s)
                 );
             }
 
@@ -7390,10 +7441,14 @@ function getFilteredModalUsers() {
             keywordsEl.textContent = groupedData.length;
 
             // Render list
+            const emptyMessage = hasDateFilter 
+                ? 'No selections found for the selected date range.'
+                : 'No selections made today.';
+            
             if (groupedData.length === 0) {
                 listEl.innerHTML = `
                     <div class="empty-state" style="padding: 2rem; text-align: center;">
-                        No selections found for the current filters.
+                        ${emptyMessage}
                     </div>
                 `;
             } else {
@@ -7440,6 +7495,7 @@ function getFilteredModalUsers() {
     </script>
 </body>
 </html>
+
 
 
 
