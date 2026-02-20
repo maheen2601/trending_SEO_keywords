@@ -1,6 +1,6 @@
+
 # import eventlet
 # eventlet.monkey_patch()
-
 
 # import sys
 # import io
@@ -53,7 +53,6 @@
 #     CREDS_FILE = "/tmp/google_credentials.json"
 #     with open(CREDS_FILE, "w") as f:
 #         f.write(GOOGLE_CREDENTIALS_JSON)
-
 
 # # ------------------ Password Hashing ------------------
 # def hash_password(password):
@@ -146,6 +145,23 @@
 #                 IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'google_trends_flags_keyword_team_key') THEN
 #                     ALTER TABLE google_trends_flags ADD CONSTRAINT google_trends_flags_keyword_team_key 
 #                         UNIQUE (keyword, team);
+#                 END IF;
+#             EXCEPTION WHEN others THEN
+#                 NULL;
+#             END $$;
+#         """)
+        
+#         # Migration: Add keyword_key to keyword_selections (unique per row so duplicate keywords get correct badges)
+#         cur.execute("""
+#             DO $$
+#             BEGIN
+#                 IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+#                                WHERE table_name='keyword_selections' AND column_name='keyword_key') THEN
+#                     ALTER TABLE keyword_selections ADD COLUMN keyword_key TEXT;
+#                     UPDATE keyword_selections SET keyword_key = keyword WHERE keyword_key IS NULL;
+#                     ALTER TABLE keyword_selections ALTER COLUMN keyword_key SET NOT NULL;
+#                     ALTER TABLE keyword_selections DROP CONSTRAINT IF EXISTS keyword_selections_username_keyword_key;
+#                     ALTER TABLE keyword_selections ADD CONSTRAINT keyword_selections_username_keyword_key_key UNIQUE (username, keyword_key);
 #                 END IF;
 #             EXCEPTION WHEN others THEN
 #                 NULL;
@@ -307,26 +323,25 @@
 #             conn.close()
 
 # def db_get_all_selections():
-#     """Get all selections from database"""
+#     """Get all selections from database (includes keyword_key for row-specific badges)."""
 #     conn = None
 #     try:
 #         conn = get_db_connection()
 #         cur = conn.cursor()
-        
 #         cur.execute(
-#             """SELECT username, team, keyword, selected_at 
+#             """SELECT username, team, keyword, COALESCE(keyword_key, keyword) AS keyword_key, selected_at 
 #                FROM keyword_selections 
 #                ORDER BY selected_at DESC"""
 #         )
 #         rows = cur.fetchall()
-        
 #         selections = []
 #         for row in rows:
 #             selections.append({
 #                 "user": row[0],
 #                 "team": row[1],
 #                 "keyword": row[2],
-#                 "timestamp": to_pakistan_time(row[3])
+#                 "keyword_key": row[3],
+#                 "timestamp": to_pakistan_time(row[4])
 #             })
 #         return selections
         
@@ -338,54 +353,53 @@
 #             cur.close()
 #             conn.close()
 
-# def db_toggle_selection(username, team, keyword):
-#     """Toggle selection in a single DB operation - returns (action, all_selections)"""
+# def db_toggle_selection(username, team, keyword, keyword_key=None):
+#     """Toggle selection in a single DB operation - returns (action, all_selections).
+#     keyword_key uniquely identifies the row (e.g. keyword|date|time|id); if None, keyword is used (one per keyword text)."""
 #     global selections_cache
+#     if keyword_key is None:
+#         keyword_key = keyword
 #     conn = None
 #     try:
 #         conn = get_db_connection()
 #         cur = conn.cursor()
-        
-#         # Check if exists and delete in one query
+#         # Use keyword_key for lookups if column exists
 #         cur.execute(
-#             "DELETE FROM keyword_selections WHERE username = %s AND keyword = %s RETURNING id",
-#             (username, keyword)
+#             """SELECT 1 FROM information_schema.columns 
+#                WHERE table_name='keyword_selections' AND column_name='keyword_key'"""
 #         )
+#         use_key = cur.fetchone() is not None
+#         if use_key:
+#             cur.execute(
+#                 "DELETE FROM keyword_selections WHERE username = %s AND keyword_key = %s RETURNING id",
+#                 (username, keyword_key)
+#             )
+#         else:
+#             cur.execute(
+#                 "DELETE FROM keyword_selections WHERE username = %s AND keyword = %s RETURNING id",
+#                 (username, keyword)
+#             )
 #         deleted = cur.fetchone()
         
 #         if deleted:
-#             # Was deleted (deselected)
 #             action = "deselected"
 #         else:
-#             # Didn't exist, so insert (select)
-#             cur.execute(
-#                 "INSERT INTO keyword_selections (username, team, keyword) VALUES (%s, %s, %s)",
-#                 (username, team, keyword)
-#             )
+#             if use_key:
+#                 cur.execute(
+#                     "INSERT INTO keyword_selections (username, team, keyword, keyword_key) VALUES (%s, %s, %s, %s)",
+#                     (username, team, keyword, keyword_key)
+#                 )
+#             else:
+#                 cur.execute(
+#                     "INSERT INTO keyword_selections (username, team, keyword) VALUES (%s, %s, %s)",
+#                     (username, team, keyword)
+#                 )
 #             action = "selected"
         
 #         conn.commit()
         
-#         # Fetch updated selections in same connection
-#         cur.execute(
-#             """SELECT username, team, keyword, selected_at 
-#                FROM keyword_selections 
-#                ORDER BY selected_at DESC"""
-#         )
-#         rows = cur.fetchall()
-        
-#         selections = []
-#         for row in rows:
-#             selections.append({
-#                 "user": row[0],
-#                 "team": row[1],
-#                 "keyword": row[2],
-#                 "timestamp": to_pakistan_time(row[3])
-#             })
-        
-#         # Update cache
+#         selections = db_get_all_selections()
 #         selections_cache = selections
-        
 #         return action, selections
         
 #     except Exception as e:
@@ -1187,20 +1201,22 @@
 #     username = data.get('username')
 #     team = data.get('team')
 #     keyword = data.get('keyword')
+#     keyword_key = data.get('keyword_key')  # unique row id (keyword|date|time|id) for correct badges on duplicate keywords
     
 #     if not username or not team or not keyword:
 #         return
+#     if not keyword_key:
+#         keyword_key = keyword  # backward compat: one selection per keyword text
     
-#     # Toggle selection in ONE database call (much faster!)
-#     action, selections = db_toggle_selection(username, team, keyword)
+#     action, selections = db_toggle_selection(username, team, keyword, keyword_key=keyword_key)
     
-#     # Broadcast to all clients
 #     emit('selection_update', {
 #         "selections": selections,
 #         "action": action,
 #         "user": username,
 #         "team": team,
-#         "keyword": keyword
+#         "keyword": keyword,
+#         "keyword_key": keyword_key
 #     }, broadcast=True)
 
 # @socketio.on('toggle_trends_flag')
@@ -1262,9 +1278,18 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
 import eventlet
 eventlet.monkey_patch()
-
 import sys
 import io
 # Fix Windows console encoding for Unicode
@@ -1296,7 +1321,8 @@ def to_pakistan_time(dt):
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-change-this-in-production'
 CORS(app)
-socketio = SocketIO(app, cors_allowed_origins="*")
+# manage_session=False avoids Flask 3.x error: "property 'session' of 'RequestContext' object has no setter"
+socketio = SocketIO(app, cors_allowed_origins="*", manage_session=False)
 
 # ------------------ Database Configuration ------------------
 DB_URL = "postgresql://neondb_owner:npg_7SjyKhDinEv8@ep-young-term-a5zyo5in-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require"
@@ -1307,6 +1333,9 @@ selections_cache = []  # Cache selections to avoid repeated DB calls
 cache_loaded = False
 
 # ------------------ Google Sheets Configuration ------------------
+# SHEET_ID = "1YeAVnMLPV5nfRE1hUbqyqmhXbBbcKzQC1JK86gPQEiY"
+# CREDENTIALS_FILE = "credentials.json"
+
 SHEET_ID = "1YeAVnMLPV5nfRE1hUbqyqmhXbBbcKzQC1JK86gPQEiY"
 # CREDENTIALS_FILE = "credentials.json"
 GOOGLE_CREDENTIALS_JSON = os.environ.get("GOOGLE_CREDENTIALS_PATH")
@@ -1316,6 +1345,7 @@ if GOOGLE_CREDENTIALS_JSON:
     CREDS_FILE = "/tmp/google_credentials.json"
     with open(CREDS_FILE, "w") as f:
         f.write(GOOGLE_CREDENTIALS_JSON)
+
 
 # ------------------ Password Hashing ------------------
 def hash_password(password):
@@ -1773,6 +1803,39 @@ def load_trends_flags_cache():
     trends_cache_loaded = True
     print(f"[Cache] Google Trends flags are team-specific (loaded per team request)")
 
+def db_get_all_flagged_clicks():
+    """Get all 'already picked story' flags for admin (who clicked, when, keyword, team)."""
+    conn = None
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute(
+            """SELECT keyword, flagged_by, team, flagged_at
+               FROM google_trends_flags
+               ORDER BY flagged_at DESC"""
+        )
+        rows = cur.fetchall()
+        flags = []
+        for row in rows:
+            try:
+                flagged_at_str = to_pakistan_time(row[3]) if row[3] else ''
+            except Exception:
+                flagged_at_str = str(row[3]) if row[3] is not None else ''
+            flags.append({
+                "keyword": row[0] or '',
+                "flagged_by": row[1] or '',
+                "team": row[2] or '',
+                "flagged_at": flagged_at_str
+            })
+        return flags
+    except Exception as e:
+        print(f"[DB] Get all flagged clicks error: {e}")
+        return []
+    finally:
+        if conn:
+            cur.close()
+            conn.close()
+
 # ------------------ Admin Database Functions ------------------
 def db_get_all_users():
     """Get all users with their stats"""
@@ -1929,13 +1992,18 @@ def db_get_admin_stats(from_date=None, to_date=None):
         """, params)
         top_keywords = [{"keyword": row[0], "count": row[1]} for row in cur.fetchall()]
         
+        # Flagged clicks (already-picked-from-Google-Trends) - always include for admin card
+        flags = db_get_all_flagged_clicks()
+        
         return {
             "total_users": total_users,
             "total_selections": total_selections,
             "team_stats": team_stats,
             "daily_stats": daily_stats,
             "top_users": top_users,
-            "top_keywords": top_keywords
+            "top_keywords": top_keywords,
+            "flagged_clicks_count": len(flags),
+            "flagged_clicks": flags
         }
         
     except Exception as e:
@@ -1946,7 +2014,9 @@ def db_get_admin_stats(from_date=None, to_date=None):
             "team_stats": [],
             "daily_stats": [],
             "top_users": [],
-            "top_keywords": []
+            "top_keywords": [],
+            "flagged_clicks_count": 0,
+            "flagged_clicks": []
         }
     finally:
         if conn:
@@ -2238,13 +2308,21 @@ def verify_admin():
 
 @app.route('/api/admin/stats', methods=['GET'])
 def get_admin_stats():
-    """Get admin dashboard statistics"""
-    # Get query parameters for date filtering
+    """Get admin dashboard statistics (includes flagged_clicks from db_get_admin_stats)."""
     from_date = request.args.get('from_date')
     to_date = request.args.get('to_date')
-    
     stats = db_get_admin_stats(from_date, to_date)
     return jsonify(stats)
+
+@app.route('/api/admin/flagged-clicks', methods=['GET'])
+def get_flagged_clicks():
+    """Get all 'already picked story' flags for admin panel (count + list)."""
+    try:
+        flags = db_get_all_flagged_clicks()
+        return jsonify({"count": len(flags), "flags": flags})
+    except Exception as e:
+        print(f"[API] flagged-clicks error: {e}")
+        return jsonify({"count": 0, "flags": []}), 200
 
 @app.route('/api/admin/users', methods=['GET'])
 def get_all_users():
@@ -2280,23 +2358,33 @@ def set_user_admin():
     result = db_set_admin(target_user, is_admin)
     return jsonify(result)
 
+def _keyword_row_key(kw):
+    """Build the same unique row key as frontend getKeywordKey (keyword|date|time|id)."""
+    k = (kw.get('keyword') or '').strip()
+    d = (kw.get('date') or '').strip()
+    t = (kw.get('time') or '').strip()
+    kid = kw.get('id')
+    id_str = str(kid) if kid is not None else ''
+    return k + '\u241f' + d + '\u241f' + t + '\u241f' + id_str
+
+
 @app.route('/api/admin/seo-stats', methods=['GET'])
 def get_seo_stats():
-    """Get SEO performance statistics - keywords posted vs selected"""
+    """Get SEO performance statistics - keywords posted vs selected (uses keyword_key for row-specific matching)."""
     from_date = request.args.get('from_date')
     to_date = request.args.get('to_date')
     
     # Get keywords from Google Sheet (includes SEO column)
     keywords_data = get_google_sheet_data()
     
-    # Get all selections
+    # Get all selections (each has keyword_key for row-specific matching)
     global selections_cache, cache_loaded
     if not cache_loaded:
         load_selections_cache()
     all_selections = selections_cache
     
-    # Create a set of selected keywords for fast lookup
-    selected_keywords = set(s['keyword'] for s in all_selections)
+    # Set of selected row keys (same as frontend: keyword|date|time|id) so duplicate keywords count per row
+    selected_row_keys = set(s.get('keyword_key') or s['keyword'] for s in all_selections)
     
     # Parse date filters
     filter_from = None
@@ -2360,9 +2448,10 @@ def get_seo_stats():
         
         seo_stats[seo_name]['total_posted'] += 1
         
-        # Check if keyword was selected
+        # Check if this row was selected (by row key so duplicate keywords count per row)
         keyword_text = kw.get('keyword', '')
-        is_selected = keyword_text in selected_keywords
+        row_key = _keyword_row_key(kw)
+        is_selected = row_key in selected_row_keys
         
         if is_selected:
             seo_stats[seo_name]['total_selected'] += 1
@@ -2527,5 +2616,6 @@ if __name__ == '__main__':
     print("Starting Keyword Selection App...")
     print("Open http://localhost:5000 in your browser")
     socketio.run(app, debug=True, host='0.0.0.0', port=5000)
+
 
 
