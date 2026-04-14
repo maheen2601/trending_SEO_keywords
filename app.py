@@ -1,7 +1,6 @@
 
 # import eventlet
 # eventlet.monkey_patch()
-
 # import sys
 # import io
 # # Fix Windows console encoding for Unicode
@@ -33,7 +32,8 @@
 # app = Flask(__name__)
 # app.secret_key = 'your-secret-key-change-this-in-production'
 # CORS(app)
-# socketio = SocketIO(app, cors_allowed_origins="*")
+# # manage_session=False avoids Flask 3.x error: "property 'session' of 'RequestContext' object has no setter"
+# socketio = SocketIO(app, cors_allowed_origins="*", manage_session=False)
 
 # # ------------------ Database Configuration ------------------
 # DB_URL = "postgresql://neondb_owner:npg_7SjyKhDinEv8@ep-young-term-a5zyo5in-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require"
@@ -44,6 +44,9 @@
 # cache_loaded = False
 
 # # ------------------ Google Sheets Configuration ------------------
+# # SHEET_ID = "1YeAVnMLPV5nfRE1hUbqyqmhXbBbcKzQC1JK86gPQEiY"
+# # CREDENTIALS_FILE = "credentials.json"
+
 # SHEET_ID = "1YeAVnMLPV5nfRE1hUbqyqmhXbBbcKzQC1JK86gPQEiY"
 # # CREDENTIALS_FILE = "credentials.json"
 # GOOGLE_CREDENTIALS_JSON = os.environ.get("GOOGLE_CREDENTIALS_PATH")
@@ -53,6 +56,7 @@
 #     CREDS_FILE = "/tmp/google_credentials.json"
 #     with open(CREDS_FILE, "w") as f:
 #         f.write(GOOGLE_CREDENTIALS_JSON)
+
 
 # # ------------------ Password Hashing ------------------
 # def hash_password(password):
@@ -510,6 +514,39 @@
 #     trends_cache_loaded = True
 #     print(f"[Cache] Google Trends flags are team-specific (loaded per team request)")
 
+# def db_get_all_flagged_clicks():
+#     """Get all 'already picked story' flags for admin (who clicked, when, keyword, team)."""
+#     conn = None
+#     try:
+#         conn = get_db_connection()
+#         cur = conn.cursor()
+#         cur.execute(
+#             """SELECT keyword, flagged_by, team, flagged_at
+#                FROM google_trends_flags
+#                ORDER BY flagged_at DESC"""
+#         )
+#         rows = cur.fetchall()
+#         flags = []
+#         for row in rows:
+#             try:
+#                 flagged_at_str = to_pakistan_time(row[3]) if row[3] else ''
+#             except Exception:
+#                 flagged_at_str = str(row[3]) if row[3] is not None else ''
+#             flags.append({
+#                 "keyword": row[0] or '',
+#                 "flagged_by": row[1] or '',
+#                 "team": row[2] or '',
+#                 "flagged_at": flagged_at_str
+#             })
+#         return flags
+#     except Exception as e:
+#         print(f"[DB] Get all flagged clicks error: {e}")
+#         return []
+#     finally:
+#         if conn:
+#             cur.close()
+#             conn.close()
+
 # # ------------------ Admin Database Functions ------------------
 # def db_get_all_users():
 #     """Get all users with their stats"""
@@ -666,13 +703,18 @@
 #         """, params)
 #         top_keywords = [{"keyword": row[0], "count": row[1]} for row in cur.fetchall()]
         
+#         # Flagged clicks (already-picked-from-Google-Trends) - always include for admin card
+#         flags = db_get_all_flagged_clicks()
+        
 #         return {
 #             "total_users": total_users,
 #             "total_selections": total_selections,
 #             "team_stats": team_stats,
 #             "daily_stats": daily_stats,
 #             "top_users": top_users,
-#             "top_keywords": top_keywords
+#             "top_keywords": top_keywords,
+#             "flagged_clicks_count": len(flags),
+#             "flagged_clicks": flags
 #         }
         
 #     except Exception as e:
@@ -683,7 +725,9 @@
 #             "team_stats": [],
 #             "daily_stats": [],
 #             "top_users": [],
-#             "top_keywords": []
+#             "top_keywords": [],
+#             "flagged_clicks_count": 0,
+#             "flagged_clicks": []
 #         }
 #     finally:
 #         if conn:
@@ -975,13 +1019,21 @@
 
 # @app.route('/api/admin/stats', methods=['GET'])
 # def get_admin_stats():
-#     """Get admin dashboard statistics"""
-#     # Get query parameters for date filtering
+#     """Get admin dashboard statistics (includes flagged_clicks from db_get_admin_stats)."""
 #     from_date = request.args.get('from_date')
 #     to_date = request.args.get('to_date')
-    
 #     stats = db_get_admin_stats(from_date, to_date)
 #     return jsonify(stats)
+
+# @app.route('/api/admin/flagged-clicks', methods=['GET'])
+# def get_flagged_clicks():
+#     """Get all 'already picked story' flags for admin panel (count + list)."""
+#     try:
+#         flags = db_get_all_flagged_clicks()
+#         return jsonify({"count": len(flags), "flags": flags})
+#     except Exception as e:
+#         print(f"[API] flagged-clicks error: {e}")
+#         return jsonify({"count": 0, "flags": []}), 200
 
 # @app.route('/api/admin/users', methods=['GET'])
 # def get_all_users():
@@ -1017,23 +1069,33 @@
 #     result = db_set_admin(target_user, is_admin)
 #     return jsonify(result)
 
+# def _keyword_row_key(kw):
+#     """Build the same unique row key as frontend getKeywordKey (keyword|date|time|id)."""
+#     k = (kw.get('keyword') or '').strip()
+#     d = (kw.get('date') or '').strip()
+#     t = (kw.get('time') or '').strip()
+#     kid = kw.get('id')
+#     id_str = str(kid) if kid is not None else ''
+#     return k + '\u241f' + d + '\u241f' + t + '\u241f' + id_str
+
+
 # @app.route('/api/admin/seo-stats', methods=['GET'])
 # def get_seo_stats():
-#     """Get SEO performance statistics - keywords posted vs selected"""
+#     """Get SEO performance statistics - keywords posted vs selected (uses keyword_key for row-specific matching)."""
 #     from_date = request.args.get('from_date')
 #     to_date = request.args.get('to_date')
     
 #     # Get keywords from Google Sheet (includes SEO column)
 #     keywords_data = get_google_sheet_data()
     
-#     # Get all selections
+#     # Get all selections (each has keyword_key for row-specific matching)
 #     global selections_cache, cache_loaded
 #     if not cache_loaded:
 #         load_selections_cache()
 #     all_selections = selections_cache
     
-#     # Create a set of selected keywords for fast lookup
-#     selected_keywords = set(s['keyword'] for s in all_selections)
+#     # Set of selected row keys (same as frontend: keyword|date|time|id) so duplicate keywords count per row
+#     selected_row_keys = set(s.get('keyword_key') or s['keyword'] for s in all_selections)
     
 #     # Parse date filters
 #     filter_from = None
@@ -1097,9 +1159,10 @@
         
 #         seo_stats[seo_name]['total_posted'] += 1
         
-#         # Check if keyword was selected
+#         # Check if this row was selected (by row key so duplicate keywords count per row)
 #         keyword_text = kw.get('keyword', '')
-#         is_selected = keyword_text in selected_keywords
+#         row_key = _keyword_row_key(kw)
+#         is_selected = row_key in selected_row_keys
         
 #         if is_selected:
 #             seo_stats[seo_name]['total_selected'] += 1
@@ -1287,9 +1350,9 @@
 
 
 
-
 import eventlet
 eventlet.monkey_patch()
+
 import sys
 import io
 # Fix Windows console encoding for Unicode
@@ -1345,7 +1408,6 @@ if GOOGLE_CREDENTIALS_JSON:
     CREDS_FILE = "/tmp/google_credentials.json"
     with open(CREDS_FILE, "w") as f:
         f.write(GOOGLE_CREDENTIALS_JSON)
-
 
 # ------------------ Password Hashing ------------------
 def hash_password(password):
@@ -1803,17 +1865,34 @@ def load_trends_flags_cache():
     trends_cache_loaded = True
     print(f"[Cache] Google Trends flags are team-specific (loaded per team request)")
 
-def db_get_all_flagged_clicks():
-    """Get all 'already picked story' flags for admin (who clicked, when, keyword, team)."""
+def db_get_all_flagged_clicks(from_date=None, to_date=None, team=None):
+    """Get all 'already picked story' flags for admin (who clicked, when, keyword, team).
+    Optionally filter by date range and/or team.
+    """
     conn = None
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute(
-            """SELECT keyword, flagged_by, team, flagged_at
-               FROM google_trends_flags
-               ORDER BY flagged_at DESC"""
-        )
+        
+        # Build query with optional date and team filters
+        query = """SELECT keyword, flagged_by, team, flagged_at
+                   FROM google_trends_flags
+                   WHERE 1=1"""
+        params = []
+        
+        if from_date:
+            query += " AND flagged_at >= %s"
+            params.append(from_date)
+        if to_date:
+            query += " AND flagged_at <= %s"
+            params.append(to_date + " 23:59:59")
+        if team:
+            query += " AND team = %s"
+            params.append(team)
+        
+        query += " ORDER BY flagged_at DESC"
+        
+        cur.execute(query, params)
         rows = cur.fetchall()
         flags = []
         for row in rows:
@@ -1924,76 +2003,102 @@ def db_get_user_selections(username, from_date=None, to_date=None):
             cur.close()
             conn.close()
 
-def db_get_admin_stats(from_date=None, to_date=None):
-    """Get overall statistics for admin dashboard"""
+def db_get_admin_stats(from_date=None, to_date=None, team=None):
+    """Get overall statistics for admin dashboard with optional date and team filters"""
     conn = None
     try:
         conn = get_db_connection()
         cur = conn.cursor()
         
-        # Base date filter
+        # Base filters
         date_filter = ""
+        team_filter = ""
         params = []
+        
         if from_date:
             date_filter += " AND selected_at >= %s"
             params.append(from_date)
         if to_date:
             date_filter += " AND selected_at <= %s"
             params.append(to_date + " 23:59:59")
+        if team:
+            team_filter = " AND team = %s"
+            params.append(team)
         
-        # Total users
-        cur.execute("SELECT COUNT(*) FROM app_users")
+        combined_filter = date_filter + team_filter
+        
+        # Total users (filtered by team if specified)
+        if team:
+            cur.execute("SELECT COUNT(*) FROM app_users WHERE team = %s", (team,))
+        else:
+            cur.execute("SELECT COUNT(*) FROM app_users")
         total_users = cur.fetchone()[0]
         
-        # Total selections (with date filter)
-        cur.execute(f"SELECT COUNT(*) FROM keyword_selections WHERE 1=1 {date_filter}", params)
+        # Total selections (with date and team filter)
+        cur.execute(f"SELECT COUNT(*) FROM keyword_selections WHERE 1=1 {combined_filter}", params)
         total_selections = cur.fetchone()[0]
         
-        # Selections by team (with date filter)
-        cur.execute(f"""
-            SELECT team, COUNT(*) as count 
-            FROM keyword_selections 
-            WHERE 1=1 {date_filter}
-            GROUP BY team 
-            ORDER BY count DESC
-        """, params)
+        # Selections by team (with date filter) - still show all teams for chart but filtered by date
+        date_only_params = []
+        if from_date:
+            date_only_params.append(from_date)
+        if to_date:
+            date_only_params.append(to_date + " 23:59:59")
+        
+        if team:
+            # If team filter is applied, only show that team
+            cur.execute(f"""
+                SELECT team, COUNT(*) as count 
+                FROM keyword_selections 
+                WHERE 1=1 {combined_filter}
+                GROUP BY team 
+                ORDER BY count DESC
+            """, params)
+        else:
+            cur.execute(f"""
+                SELECT team, COUNT(*) as count 
+                FROM keyword_selections 
+                WHERE 1=1 {date_filter}
+                GROUP BY team 
+                ORDER BY count DESC
+            """, date_only_params)
         team_stats = [{"team": row[0], "count": row[1]} for row in cur.fetchall()]
         
-        # Selections by date (last 30 days)
+        # Selections by date (last 30 days) - with team filter
         cur.execute(f"""
             SELECT DATE(selected_at) as date, COUNT(*) as count 
             FROM keyword_selections 
-            WHERE selected_at >= CURRENT_DATE - INTERVAL '30 days' {date_filter}
+            WHERE selected_at >= CURRENT_DATE - INTERVAL '30 days' {combined_filter}
             GROUP BY DATE(selected_at) 
             ORDER BY date DESC
             LIMIT 30
         """, params)
         daily_stats = [{"date": str(row[0]), "count": row[1]} for row in cur.fetchall()]
         
-        # Top users (with date filter)
+        # Top users (with date and team filter)
         cur.execute(f"""
             SELECT username, team, COUNT(*) as count 
             FROM keyword_selections 
-            WHERE 1=1 {date_filter}
+            WHERE 1=1 {combined_filter}
             GROUP BY username, team 
             ORDER BY count DESC 
             LIMIT 10
         """, params)
         top_users = [{"username": row[0], "team": row[1], "count": row[2]} for row in cur.fetchall()]
         
-        # Most selected keywords (with date filter)
+        # Most selected keywords (with date and team filter)
         cur.execute(f"""
             SELECT keyword, COUNT(*) as count 
             FROM keyword_selections 
-            WHERE 1=1 {date_filter}
+            WHERE 1=1 {combined_filter}
             GROUP BY keyword 
             ORDER BY count DESC 
             LIMIT 10
         """, params)
         top_keywords = [{"keyword": row[0], "count": row[1]} for row in cur.fetchall()]
         
-        # Flagged clicks (already-picked-from-Google-Trends) - always include for admin card
-        flags = db_get_all_flagged_clicks()
+        # Flagged clicks - filtered by date and team
+        flags = db_get_all_flagged_clicks(from_date, to_date, team)
         
         return {
             "total_users": total_users,
@@ -2308,17 +2413,25 @@ def verify_admin():
 
 @app.route('/api/admin/stats', methods=['GET'])
 def get_admin_stats():
-    """Get admin dashboard statistics (includes flagged_clicks from db_get_admin_stats)."""
+    """Get admin dashboard statistics (includes flagged_clicks from db_get_admin_stats).
+    Supports optional filtering by from_date, to_date, and team.
+    """
     from_date = request.args.get('from_date')
     to_date = request.args.get('to_date')
-    stats = db_get_admin_stats(from_date, to_date)
+    team = request.args.get('team')
+    stats = db_get_admin_stats(from_date, to_date, team)
     return jsonify(stats)
 
 @app.route('/api/admin/flagged-clicks', methods=['GET'])
 def get_flagged_clicks():
-    """Get all 'already picked story' flags for admin panel (count + list)."""
+    """Get all 'already picked story' flags for admin panel (count + list).
+    Supports optional filtering via from_date, to_date, and team query params.
+    """
     try:
-        flags = db_get_all_flagged_clicks()
+        from_date = request.args.get('from_date')
+        to_date = request.args.get('to_date')
+        team = request.args.get('team')
+        flags = db_get_all_flagged_clicks(from_date, to_date, team)
         return jsonify({"count": len(flags), "flags": flags})
     except Exception as e:
         print(f"[API] flagged-clicks error: {e}")
@@ -2370,9 +2483,12 @@ def _keyword_row_key(kw):
 
 @app.route('/api/admin/seo-stats', methods=['GET'])
 def get_seo_stats():
-    """Get SEO performance statistics - keywords posted vs selected (uses keyword_key for row-specific matching)."""
+    """Get SEO performance statistics - keywords posted vs selected (uses keyword_key for row-specific matching).
+    Supports optional team filtering to see which team's selections count.
+    """
     from_date = request.args.get('from_date')
     to_date = request.args.get('to_date')
+    team = request.args.get('team')
     
     # Get keywords from Google Sheet (includes SEO column)
     keywords_data = get_google_sheet_data()
@@ -2381,10 +2497,15 @@ def get_seo_stats():
     global selections_cache, cache_loaded
     if not cache_loaded:
         load_selections_cache()
-    all_selections = selections_cache
+    
+    # Filter selections by team if specified
+    if team:
+        filtered_selections = [s for s in selections_cache if s.get('team') == team]
+    else:
+        filtered_selections = selections_cache
     
     # Set of selected row keys (same as frontend: keyword|date|time|id) so duplicate keywords count per row
-    selected_row_keys = set(s.get('keyword_key') or s['keyword'] for s in all_selections)
+    selected_row_keys = set(s.get('keyword_key') or s['keyword'] for s in filtered_selections)
     
     # Parse date filters
     filter_from = None
@@ -2607,7 +2728,7 @@ if __name__ == '__main__':
     print("[DB] Initializing database...")
     init_database()
     
-    # Load selections cache
+    # Load selections cache399508
     load_selections_cache()
     
     # Load Google Trends flags cache
@@ -2615,7 +2736,15 @@ if __name__ == '__main__':
     
     print("Starting Keyword Selection App...")
     print("Open http://localhost:5000 in your browser")
-    socketio.run(app, debug=True, host='0.0.0.0', port=5000)
+    socketio.run(app, debug=True, use_reloader=False, host='0.0.0.0', port=5000)
+
+
+
+
+
+
+
+
 
 
 
