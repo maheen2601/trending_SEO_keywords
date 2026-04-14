@@ -853,19 +853,35 @@
             border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 1rem 1.25rem;
-            cursor: pointer;
             transition: all 0.2s ease;
-            display: flex;
-            align-items: flex-start;
-            gap: 1rem;
             display: flex;
             flex-direction: column;
             height: 100%;
         }
+        .keyword-card .keyword-card-top {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            width: 100%;
+        }
+        .keyword-checkbox {
+            cursor: pointer;
+            position: relative;
+            z-index: 2;
+        }
+        button.keyword-checkbox {
+            font: inherit;
+            margin: 0;
+            padding: 0;
+            background: transparent;
+            border: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
         .keyword-checkbox:hover {
-    border-color: #007bff;
-    background: #e7f1ff;
-}
+            border-color: #007bff;
+            background: #e7f1ff;
+        }
 
         /* .keyword-card:hover {
             background: var(--bg-hover);
@@ -882,6 +898,8 @@
         .keyword-checkbox {
             width: 24px;
             height: 24px;
+            min-width: 24px;
+            min-height: 24px;
             border: 2px solid var(--border-color);
             border-radius: 6px;
             display: flex;
@@ -889,6 +907,9 @@
             justify-content: center;
             transition: all 0.2s ease;
             flex-shrink: 0;
+        }
+        button.keyword-checkbox {
+            border: 2px solid var(--border-color);
         }
 
         .keyword-card.selected .keyword-checkbox {
@@ -1587,7 +1608,7 @@
     </style>
 </head>
 <body>
-   
+ 
     <header class="header">
         <div class="logo">SEO Suggested Keywords</div>
         <div class="header-actions">
@@ -1621,10 +1642,9 @@
         </div>
     </header>
 
-  
     <div class="auth-container" id="authSection">
         <div class="auth-card">
-          
+         
             <div id="loginForm">
                 <h2>Welcome Back</h2>
                 <p>Sign in to continue to the dashboard</p>
@@ -1663,7 +1683,7 @@
                 <p class="error-msg" id="loginError"></p>
             </div>
 
-          
+           
             <div id="forgotPasswordForm" class="hidden">
                 <h2>Reset Password</h2>
                 <p>Enter your username and team to verify identity</p>
@@ -1705,7 +1725,7 @@
                 <p class="success-msg" id="resetSuccess"></p>
             </div>
 
-           
+          
             <div id="registerForm" class="hidden">
                 <h2>Create Account</h2>
                 <p>Register to start selecting keywords</p>
@@ -1759,11 +1779,11 @@
         </div>
     </div>
 
- 
-    <div class="container dashboard" id="dashboard">
    
+    <div class="container dashboard" id="dashboard">
+      
         <section class="keywords-section">
-         
+       
             <div class="search-hero">
                 <div class="search-container">
                     <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1775,7 +1795,7 @@
                 </div>
             </div>
 
-            
+    
             <div class="filters-row">
                 <div class="filters-left">
                     <div class="filter-chip-group">
@@ -1813,7 +1833,6 @@
                 </div>
             </div>
 
-           
             <div class="stats-row">
                 <div class="stat-card-new">
                     <div class="stat-icon-box blue">📊</div>
@@ -1844,25 +1863,25 @@
                     </div>
                 </div>
             </div>
-           
+          
             <span id="totalCount" style="display:none;">0</span>
             
-           
+      
             <div class="keywords-grid" id="keywordsGrid">
-             
+         
             </div>
             
-
+         
             <div class="pagination-container" id="keywordsPagination">
-     
+      
             </div>
         </section>
 
-      
+
         <section class="selections-section">
             <h2 class="section-title">Picked Keywords</h2>
             
-        
+    
             <div class="filter-bar">
                 <div class="filter-group">
                     <label>From:</label>
@@ -1916,7 +1935,7 @@
         </section>
     </div>
 
- 
+   
     <div class="toast" id="toast">
         <span class="toast-icon">✨</span>
         <span class="toast-message" id="toastMessage">Notification</span>
@@ -1947,7 +1966,7 @@
         </div>
     </div>
 
-
+    
     <div class="modal-overlay" id="keywordModal" onclick="closeModal(event)">
         <div class="modal" onclick="event.stopPropagation()">
             <div class="modal-header">
@@ -1967,7 +1986,7 @@
                 </div>
             </div>
             
-    
+ 
             <div class="filter-bar" style="margin-bottom: 1rem;">
                 <div class="filter-group">
                     <label>From:</label>
@@ -1991,11 +2010,10 @@
             </div>
             
             <div class="modal-users-list" id="modalUsersList">
-              
+         
             </div>
         </div>
     </div>
-
 
 
     <div id="usersModal" class="modal-overlay">
@@ -2169,12 +2187,19 @@
 
         // Socket.IO Connection
         function initSocket() {
-            socket = io();
+            socket = io({ path: '/socket.io', transports: ['websocket', 'polling'] });
 
             socket.on('connect', () => {
                 console.log('Connected to server');
                 if (currentUser) {
                     socket.emit('user_online', { username: currentUser.name });
+                }
+            });
+
+            socket.on('connect_error', (err) => {
+                console.error('Socket connection error:', err);
+                if (document.getElementById('dashboard') && document.getElementById('dashboard').classList.contains('active')) {
+                    showToast('Reconnecting...', 'warning');
                 }
             });
 
@@ -2735,7 +2760,15 @@
         function selectionMatchesRow(s, key, keywordText) {
             const selKey = s.keyword_key || s.keyword;
             if (selKey === key) return true;
-            if (!key.includes('\u241F') || selKey === s.keyword) return s.keyword === keywordText;
+            // Legacy selections (stored with keyword_key = keyword, e.g. from before row-specific keys):
+            // only show them on rows that have no date/time, so we don't show Jan selections on a Feb row
+            if (selKey === s.keyword && s.keyword === keywordText) {
+                const parts = key.split('\u241F');
+                const hasDate = parts.length > 1 && (parts[1] || '').trim() !== '';
+                const hasTime = parts.length > 2 && (parts[2] || '').trim() !== '';
+                if (hasDate || hasTime) return false; // row is dated – don't show legacy
+                return true;
+            }
             return false;
         }
 
@@ -2835,18 +2868,20 @@
 
                 return `
                     <div class="keyword-card ${isSelected ? 'selected' : ''} ${teamsSelected.length > 0 ? 'has-selections' : ''}">
-                        <div class="keyword-checkbox" data-keyword="${encodeURIComponent(kw.keyword)}" data-keyword-key="${encodeURIComponent(key)}" onclick="toggleKeyword(this)"></div>
-                        <div class="keyword-info">
-                            <div class="keyword-header-row">
-                                <div class="keyword-text">${kw.keyword}${kw.title ? ` <span class="keyword-title">- ${kw.title}</span>` : ''}</div>
-                                ${teamBadgesHTML}
-                            </div> 
-                            ${kw.remarks ? `<div class="keyword-remarks">${kw.remarks}</div>` : ''}
-                            <div class="keyword-meta">
-                                <span class="keyword-tag category">${kw.category}</span>
-                                ${kw.hours_ago ? `<span class="keyword-tag time">${kw.hours_ago}</span>` : ''}
-                                ${kw.date ? `<span class="keyword-tag date">📅 ${kw.date}</span>` : ''}
-                                ${kw.time ? `<span class="keyword-tag time">🕐 ${kw.time}</span>` : ''}
+                        <div class="keyword-card-top">
+                            <button type="button" class="keyword-checkbox" data-keyword="${encodeURIComponent(kw.keyword)}" data-keyword-key="${encodeURIComponent(key)}" onclick="event.stopPropagation(); event.preventDefault(); toggleKeyword(this)" title="Select this keyword" aria-label="Select this keyword"></button>
+                            <div class="keyword-info">
+                                <div class="keyword-header-row">
+                                    <div class="keyword-text">${kw.keyword}${kw.title ? ` <span class="keyword-title">- ${kw.title}</span>` : ''}</div>
+                                    ${teamBadgesHTML}
+                                </div> 
+                                ${kw.remarks ? `<div class="keyword-remarks">${kw.remarks}</div>` : ''}
+                                <div class="keyword-meta">
+                                    <span class="keyword-tag category">${kw.category}</span>
+                                    ${kw.hours_ago ? `<span class="keyword-tag time">${kw.hours_ago}</span>` : ''}
+                                    ${kw.date ? `<span class="keyword-tag date">📅 ${kw.date}</span>` : ''}
+                                    ${kw.time ? `<span class="keyword-tag time">🕐 ${kw.time}</span>` : ''}
+                                </div>
                             </div>
                         </div>
             <div class="keyword-info-flag">
@@ -2860,19 +2895,15 @@
                             <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
                                 <span style="font-size: 1rem;">⚠️</span>
                                 <span><strong>${flag.flagged_by}</strong> already picked this story from Google Trends</span>
-                                <button onclick="toggleTrendsFlag('${kw.keyword.replace(/'/g, "\\'")}', event)" 
+                                <button type="button" data-keyword="${encodeURIComponent(kw.keyword)}" onclick="toggleTrendsFlag(this, event)" 
                                     style="background: none; border: 1px solid var(--accent-danger); color: var(--accent-danger); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; cursor: pointer; margin-left: auto;"
                                     title="Remove flag">✕</button>
                 </div>
             </div>`;
         } else {
             // No flag for your team yet
-            return `<label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                <input
-                    type="checkbox"
-                    onchange="toggleTrendsFlag('${kw.keyword.replace(/'/g, "\\'")}', event)"
-                    style="cursor: pointer;"
-                />
+            return `<label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;" data-keyword="${encodeURIComponent(kw.keyword)}" onclick="toggleTrendsFlag(this, event)">
+                <input type="checkbox" style="cursor: pointer; pointer-events: none;" />
                 <span style="font-size: 0.85rem; color: var(--text-secondary);">This story is already picked from Google Trends</span>
             </label>`;
         }
@@ -2888,11 +2919,26 @@
         }
 
 
-        function toggleTrendsFlag(keyword, event) {
-            if (event) event.stopPropagation();
-            if (!currentUser || !currentUser.team) return;
-            
-            // Emit socket event to toggle the flag (team-specific)
+        function toggleTrendsFlag(keywordOrElement, event) {
+            if (event) { event.stopPropagation(); event.preventDefault(); }
+            const keyword = typeof keywordOrElement === 'string'
+                ? keywordOrElement
+                : (keywordOrElement && keywordOrElement.dataset && keywordOrElement.dataset.keyword
+                    ? decodeURIComponent(String(keywordOrElement.dataset.keyword).replace(/\+/g, ' '))
+                    : '');
+            if (!keyword) return;
+            if (!currentUser || !currentUser.team) {
+                showToast('Please log in to flag keywords', 'warning');
+                return;
+            }
+            if (!socket) {
+                showToast('Not connected. Please reload the page.', 'error');
+                return;
+            }
+            if (!socket.connected) {
+                showToast('Connecting... Try again in a moment.', 'warning');
+                return;
+            }
             socket.emit('toggle_trends_flag', {
                 username: currentUser.name,
                 keyword: keyword,
@@ -2906,11 +2952,15 @@ function openUserModalFromBadge(element) {
     const keyword = decodeURIComponent(element.dataset.keyword || '');
     const keywordKey = decodeURIComponent(element.dataset.keywordKey || '') || keyword;
     const team = decodeURIComponent(element.dataset.team || '');
-    
-    const users = selections.filter(s => s.team === team && (
-        (s.keyword_key || s.keyword) === keywordKey ||
-        (s.keyword_key === s.keyword && s.keyword === keyword)
-    ));
+    const parts = keywordKey.split('\u241F');
+    const rowHasDateOrTime = (parts.length > 1 && (parts[1] || '').trim() !== '') || (parts.length > 2 && (parts[2] || '').trim() !== '');
+
+    const users = selections.filter(s => {
+        if (s.team !== team) return false;
+        if ((s.keyword_key || s.keyword) === keywordKey) return true;
+        if (rowHasDateOrTime) return false; // dated row – don't include legacy
+        return s.keyword_key === s.keyword && s.keyword === keyword;
+    });
     
     console.log('Badge clicked - Keyword:', keyword, 'Team:', team, 'Found:', users);
     
@@ -3197,7 +3247,7 @@ function getFilteredModalUsers() {
 //                     ${group.keyword}
 //                 </span>
 //             </td>
-//             
+
 //             <td>${teamBadgesHTML}</td>
 //             <td><span class="timestamp">${group.latestTime}</span></td>
 //         </tr>
@@ -3469,9 +3519,21 @@ function getFilteredModalUsers() {
             }
         }
 
-        // Actions (element = keyword-checkbox div with data-keyword and data-keyword-key)
+        // Actions (element = keyword-checkbox button with data-keyword and data-keyword-key)
         function toggleKeyword(element) {
-            if (!currentUser) return;
+            if (!element || !element.dataset) return;
+            if (!currentUser) {
+                showToast('Please log in to select keywords', 'warning');
+                return;
+            }
+            if (!socket) {
+                showToast('Not connected. Please reload the page.', 'error');
+                return;
+            }
+            if (!socket.connected) {
+                showToast('Connecting... Try again in a moment.', 'warning');
+                return;
+            }
             const keyword = decodeURIComponent(element.dataset.keyword || '');
             const keywordKey = decodeURIComponent(element.dataset.keywordKey || '') || keyword;
             socket.emit('select_keyword', {
@@ -3808,7 +3870,11 @@ function getFilteredModalUsers() {
         
     </script>
 </body>
-</html> -->
+</html>
+
+ -->
+
+
 
 
 
@@ -7710,11 +7776,3 @@ function getFilteredModalUsers() {
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
