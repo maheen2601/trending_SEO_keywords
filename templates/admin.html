@@ -337,6 +337,132 @@
             border-color: var(--accent-primary);
         }
 
+        /* SEO Stats Section */
+        .seo-section {
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .seo-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 1rem;
+        }
+
+        .seo-card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            padding: 1.25rem;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .seo-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px var(--shadow-color);
+            border-color: var(--accent-primary);
+        }
+
+        .seo-card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .seo-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            color: white;
+        }
+
+        .seo-name {
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--text-primary);
+        }
+
+        .seo-stats-row {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .seo-stat {
+            flex: 1;
+            text-align: center;
+            padding: 0.75rem 0.5rem;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+        }
+
+        .seo-stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: block;
+        }
+
+        .seo-stat-value.posted {
+            color: #3498db;
+        }
+
+        .seo-stat-value.selected {
+            color: #00d4aa;
+        }
+
+        .seo-stat-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .seo-progress {
+            margin-top: 0.75rem;
+        }
+
+        .seo-progress-bar {
+            height: 6px;
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .seo-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00d4aa, #3498db);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .seo-progress-text {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+            text-align: right;
+        }
+
+        .seo-empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+            grid-column: 1 / -1;
+        }
+
         /* Charts Section */
         .charts-grid {
             display: grid;
@@ -658,7 +784,7 @@
     </style>
 </head>
 <body>
-   
+
     <div class="login-overlay" id="loginOverlay">
         <div class="login-box">
             <h1>🔐 Admin Login</h1>
@@ -670,7 +796,7 @@
         </div>
     </div>
 
-  
+    
     <div class="dashboard" id="dashboard">
      
         <header class="header">
@@ -686,7 +812,7 @@
         </header>
 
         <div class="container">
-         
+        
             <div class="filters-row">
                 <div class="filter-group">
                     <label>📅 From:</label>
@@ -700,7 +826,7 @@
                     <label>👥 Team:</label>
                     <select id="filterTeam">
                         <option value="">All Teams</option>
-                        
+                      
                         <option value="Data">Data</option>
                         <option value="GEO">GEO</option>
                         <option value="The News">The News</option>
@@ -711,14 +837,14 @@
                         <option value="Hungama">Hungama</option>
                         <option value="SEO">SEO</option>
 
-                        
+                       
                     </select>
                 </div>
                 <button class="apply-btn" onclick="applyFilters()">Apply Filters</button>
                 <button class="clear-btn" onclick="clearFilters()">✕ Clear Filters</button>
             </div>
 
-            
+     
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-icon blue">👥</div>
@@ -742,7 +868,18 @@
                 </div>
             </div>
 
-            
+         
+            <div class="seo-section">
+                <h2 class="section-title">📝 SEO Performance <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 400;" id="seoDateRange">(Today)</span></h2>
+                <div class="seo-cards-grid" id="seoCardsGrid">
+                    <div class="seo-empty-state">
+                        <div class="spinner"></div>
+                        Loading SEO stats...
+                    </div>
+                </div>
+            </div>
+
+        
             <div class="charts-grid">
                 <div class="chart-card">
                     <h3>📊 Selections by Team</h3>
@@ -758,7 +895,7 @@
                 </div>
             </div>
 
-         
+       
             <div class="charts-grid">
                 <div class="chart-card">
                     <h3>🔥 Top 10 Keywords</h3>
@@ -774,7 +911,7 @@
                 </div>
             </div>
 
-          
+         
             <div class="users-section">
                 <div class="section-header">
                     <h2>👥 All Users</h2>
@@ -806,7 +943,7 @@
         </div>
     </div>
 
-   
+
     <div class="modal-overlay" id="userModal">
         <div class="modal">
             <div class="modal-header">
@@ -843,7 +980,7 @@
         </div>
     </div>
 
-    
+
     <div class="modal-overlay" id="todayModal">
         <div class="modal" style="max-width: 900px;">
             <div class="modal-header">
@@ -873,7 +1010,7 @@
                     </div>
                     <select id="todayTeamFilter" onchange="filterTodaySelections()" style="padding: 0.5rem; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-primary);">
                         <option value="">All Teams</option>
-                     
+                        
                     </select>
                 </div>
                 
@@ -1020,7 +1157,8 @@
         async function loadDashboardData() {
             await Promise.all([
                 loadStats(),
-                loadUsers()
+                loadUsers(),
+                loadSeoStats()
             ]);
         }
 
@@ -1056,14 +1194,191 @@
             }
         }
 
+        // SEO Stats
+        let seoStatsData = [];
+        
+        // Color palette for SEO avatars
+        const SEO_COLORS = [
+            '#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6',
+            '#1abc9c', '#e91e63', '#00bcd4', '#ff5722', '#607d8b',
+            '#8bc34a', '#ff9800', '#795548', '#673ab7', '#009688'
+        ];
+        
+        function getSeoColor(name) {
+            // Generate consistent color based on name
+            let hash = 0;
+            for (let i = 0; i < name.length; i++) {
+                hash = name.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            return SEO_COLORS[Math.abs(hash) % SEO_COLORS.length];
+        }
+
+        async function loadSeoStats() {
+            const fromDate = document.getElementById('filterFromDate').value;
+            const toDate = document.getElementById('filterToDate').value;
+            
+            let url = '/api/admin/seo-stats';
+            const params = new URLSearchParams();
+            if (fromDate) params.append('from_date', fromDate);
+            if (toDate) params.append('to_date', toDate);
+            if (params.toString()) url += '?' + params.toString();
+
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                seoStatsData = data.seo_stats || [];
+                
+                // Update date range label
+                const dateRangeEl = document.getElementById('seoDateRange');
+                if (data.filter_from && data.filter_to) {
+                    if (data.filter_from === data.filter_to) {
+                        const date = new Date(data.filter_from);
+                        const formattedDate = date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                        dateRangeEl.textContent = `(${formattedDate})`;
+                    } else {
+                        const fromD = new Date(data.filter_from);
+                        const toD = new Date(data.filter_to);
+                        const fromFormatted = fromD.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+                        const toFormatted = toD.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                        dateRangeEl.textContent = `(${fromFormatted} - ${toFormatted})`;
+                    }
+                } else {
+                    dateRangeEl.textContent = '(All Time)';
+                }
+                
+                renderSeoCards(seoStatsData);
+            } catch (error) {
+                console.error('Load SEO stats error:', error);
+                document.getElementById('seoCardsGrid').innerHTML = '<div class="seo-empty-state">Error loading SEO stats</div>';
+            }
+        }
+
+        function renderSeoCards(stats) {
+            const grid = document.getElementById('seoCardsGrid');
+            
+            if (!stats || stats.length === 0) {
+                grid.innerHTML = '<div class="seo-empty-state">📭 No SEO data available for selected date range</div>';
+                return;
+            }
+            
+            grid.innerHTML = stats.map(seo => {
+                const percentage = seo.total_posted > 0 ? Math.round((seo.total_selected / seo.total_posted) * 100) : 0;
+                const color = getSeoColor(seo.seo);
+                
+                return `
+                    <div class="seo-card" onclick="openSeoDetailModal('${encodeURIComponent(seo.seo)}')">
+                        <div class="seo-card-header">
+                            <div class="seo-avatar" style="background: ${color};">${seo.seo.charAt(0).toUpperCase()}</div>
+                            <div class="seo-name">${seo.seo}</div>
+                        </div>
+                        <div class="seo-stats-row">
+                            <div class="seo-stat">
+                                <span class="seo-stat-value posted">${seo.total_posted}</span>
+                                <span class="seo-stat-label">Posted</span>
+                            </div>
+                            <div class="seo-stat">
+                                <span class="seo-stat-value selected">${seo.total_selected}</span>
+                                <span class="seo-stat-label">Selected</span>
+                            </div>
+                        </div>
+                        <div class="seo-progress">
+                            <div class="seo-progress-bar">
+                                <div class="seo-progress-fill" style="width: ${percentage}%;"></div>
+                            </div>
+                            <div class="seo-progress-text">${percentage}% picked</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openSeoDetailModal(encodedName) {
+            const seoName = decodeURIComponent(encodedName);
+            const seoData = seoStatsData.find(s => s.seo === seoName);
+            
+            if (!seoData) return;
+            
+            const color = getSeoColor(seoName);
+            
+            // Create modal content
+            const content = `
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+                    <div class="seo-avatar" style="background: ${color}; width: 56px; height: 56px; font-size: 1.5rem;">${seoName.charAt(0).toUpperCase()}</div>
+                    <div>
+                        <h3 style="font-size: 1.25rem; color: var(--text-primary);">${seoName}</h3>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem;">SEO Performance</p>
+                    </div>
+                </div>
+                
+                <div class="user-detail-stats" style="margin-bottom: 1.5rem;">
+                    <div class="user-detail-stat">
+                        <div class="value" style="color: #3498db;">${seoData.total_posted}</div>
+                        <div class="label">Keywords Posted</div>
+                    </div>
+                    <div class="user-detail-stat">
+                        <div class="value" style="color: #00d4aa;">${seoData.total_selected}</div>
+                        <div class="label">Keywords Selected</div>
+                    </div>
+                    <div class="user-detail-stat">
+                        <div class="value">${seoData.total_posted > 0 ? Math.round((seoData.total_selected / seoData.total_posted) * 100) : 0}%</div>
+                        <div class="label">Pick Rate</div>
+                    </div>
+                </div>
+                
+                <h4 style="color: var(--text-secondary); margin-bottom: 0.75rem; font-size: 0.9rem;">📋 Keywords List</h4>
+                <div class="selections-list" style="max-height: 300px; overflow-y: auto;">
+                    ${seoData.keywords.map(kw => `
+                        <div class="selection-item" style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="font-weight: 500; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${kw.keyword}">${kw.keyword}</div>
+                                ${kw.title ? `<div style="font-size: 0.8rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${kw.title}">${kw.title}</div>` : ''}
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0;">
+                                <span style="font-size: 0.8rem; color: var(--text-muted);">${kw.date || '-'}</span>
+                                ${kw.selected 
+                                    ? '<span style="background: rgba(0, 212, 170, 0.15); color: #00d4aa; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.7rem; font-weight: 600;">✓ PICKED</span>'
+                                    : '<span style="background: var(--bg-tertiary); color: var(--text-muted); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.7rem;">PENDING</span>'
+                                }
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            
+            // Use existing modal structure
+            document.getElementById('modalUserName').textContent = `${seoName} - SEO Stats`;
+            document.getElementById('modalUserAvatar').textContent = seoName.charAt(0).toUpperCase();
+            document.getElementById('modalUserAvatar').style.background = color;
+            
+            const modalBody = document.querySelector('#userModal .modal-body');
+            modalBody.innerHTML = content;
+            
+            document.getElementById('userModal').classList.add('active');
+        }
+
         function updateStatsCards(stats) {
             document.getElementById('totalUsers').textContent = stats.total_users || 0;
             document.getElementById('totalSelections').textContent = stats.total_selections || 0;
             
-            // Today's selections
-            const today = new Date().toISOString().split('T')[0];
+            // // Today's selections
+            // const today = new Date().toISOString().split('T')[0];
+            // const todayStat = stats.daily_stats?.find(d => d.date === today);
+            // document.getElementById('todaySelections').textContent = todayStat?.count || 0;
+
+
+
+
+            // Today's selections in Pakistan local time
+            const now = new Date();
+
+            // Convert to PKT (UTC+5)
+            const pkTime = new Date(now.getTime() + (5 * 60 * 60 * 1000));
+
+            const today = pkTime.toISOString().split('T')[0];
+
             const todayStat = stats.daily_stats?.find(d => d.date === today);
             document.getElementById('todaySelections').textContent = todayStat?.count || 0;
+
             
             // Top user
             if (stats.top_users && stats.top_users.length > 0) {
@@ -1268,6 +1583,7 @@
 
         function applyFilters() {
             loadStats();
+            loadSeoStats();
             renderUsersTable(allUsers);
         }
 
@@ -1438,8 +1754,11 @@
         checkSession();
     </script>
 </body>
-</html>
- -->
+</html> -->
+
+
+
+
 
 
 
@@ -2325,6 +2644,11 @@
                     <div class="stat-value" id="topUserName">-</div>
                     <div class="stat-label">Top User</div>
                 </div>
+                <div class="stat-card clickable" onclick="openFlaggedClicksModal()" title="Authors who clicked &quot;Already picked from Google Trends&quot;">
+                    <div class="stat-icon orange">⚠️</div>
+                    <div class="stat-value" id="flaggedClicksCount">0</div>
+                    <div class="stat-label">Flagged Clicks</div>
+                </div>
             </div>
 
             <!-- SEO Performance Section -->
@@ -2439,6 +2763,22 @@
         </div>
     </div>
 
+    <!-- SEO Detail Modal (separate from User Modal so clicking a user shows user details) -->
+    <div class="modal-overlay" id="seoDetailModal">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2>
+                    <span id="seoModalAvatar" class="avatar">S</span>
+                    <span id="seoModalTitle">SEO Performance</span>
+                </h2>
+                <button class="modal-close" onclick="closeSeoDetailModal()">✕</button>
+            </div>
+            <div class="modal-body" id="seoDetailModalBody">
+                <!-- Filled by openSeoDetailModal -->
+            </div>
+        </div>
+    </div>
+
     <!-- Today's Selections Modal -->
     <div class="modal-overlay" id="todayModal">
         <div class="modal" style="max-width: 900px;">
@@ -2488,6 +2828,57 @@
                                 <td colspan="4" class="loading">
                                     <div class="spinner"></div>
                                     Loading today's selections...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flagged Clicks Modal (Already Picked from Google Trends) -->
+    <div class="modal-overlay" id="flaggedClicksModal">
+        <div class="modal" style="max-width: 900px;">
+            <div class="modal-header">
+                <h2>⚠️ Flagged Clicks – Already Picked Stories</h2>
+                <button class="modal-close" onclick="closeFlaggedClicksModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">Authors who marked a keyword as &quot;Already picked from Google Trends&quot;.</p>
+                <div class="user-detail-stats" style="margin-bottom: 1rem;">
+                    <div class="user-detail-stat">
+                        <div class="value" id="flaggedTotalCount">0</div>
+                        <div class="label">Total Flags</div>
+                    </div>
+                    <div class="user-detail-stat">
+                        <div class="value" id="flaggedUniqueKeywords">0</div>
+                        <div class="label">Unique Keywords</div>
+                    </div>
+                    <div class="user-detail-stat">
+                        <div class="value" id="flaggedUniqueUsers">0</div>
+                        <div class="label">Unique Users</div>
+                    </div>
+                </div>
+                <div class="search-box" style="margin-bottom: 1rem;">
+                    <span>🔍</span>
+                    <input type="text" id="flaggedSearch" placeholder="Search by user, words, or team..." oninput="filterFlaggedTable()">
+                </div>
+                <div style="max-height: 400px; overflow-y: auto;">
+                    <table class="users-table" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>Who</th>
+                                <th>Team</th>
+                                <th>Keyword</th>
+                                <th>When</th>
+                            </tr>
+                        </thead>
+                        <tbody id="flaggedClicksBody">
+                            <tr>
+                                <td colspan="4" class="loading">
+                                    <div class="spinner"></div>
+                                    Loading...
                                 </td>
                             </tr>
                         </tbody>
@@ -2615,20 +3006,24 @@
         // Load Dashboard Data
         async function loadDashboardData() {
             await Promise.all([
-                loadStats(),
+                loadStats(),  // This also loads flagged clicks with date filters
                 loadUsers(),
                 loadSeoStats()
             ]);
         }
 
+        let flaggedClicksData = [];
+
         async function loadStats() {
             const fromDate = document.getElementById('filterFromDate').value;
             const toDate = document.getElementById('filterToDate').value;
+            const team = document.getElementById('filterTeam').value;
             
             let url = '/api/admin/stats';
             const params = new URLSearchParams();
             if (fromDate) params.append('from_date', fromDate);
             if (toDate) params.append('to_date', toDate);
+            if (team) params.append('team', team);
             if (params.toString()) url += '?' + params.toString();
 
             try {
@@ -2675,11 +3070,13 @@
         async function loadSeoStats() {
             const fromDate = document.getElementById('filterFromDate').value;
             const toDate = document.getElementById('filterToDate').value;
+            const team = document.getElementById('filterTeam').value;
             
             let url = '/api/admin/seo-stats';
             const params = new URLSearchParams();
             if (fromDate) params.append('from_date', fromDate);
             if (toDate) params.append('to_date', toDate);
+            if (team) params.append('team', team);
             if (params.toString()) url += '?' + params.toString();
 
             try {
@@ -2804,15 +3201,17 @@
                 </div>
             `;
             
-            // Use existing modal structure
-            document.getElementById('modalUserName').textContent = `${seoName} - SEO Stats`;
-            document.getElementById('modalUserAvatar').textContent = seoName.charAt(0).toUpperCase();
-            document.getElementById('modalUserAvatar').style.background = color;
+            // Use dedicated SEO modal (do not reuse userModal so user details modal keeps its structure)
+            document.getElementById('seoModalTitle').textContent = `${seoName} - SEO Stats`;
+            document.getElementById('seoModalAvatar').textContent = seoName.charAt(0).toUpperCase();
+            document.getElementById('seoModalAvatar').style.background = color;
             
-            const modalBody = document.querySelector('#userModal .modal-body');
-            modalBody.innerHTML = content;
-            
-            document.getElementById('userModal').classList.add('active');
+            document.getElementById('seoDetailModalBody').innerHTML = content;
+            document.getElementById('seoDetailModal').classList.add('active');
+        }
+
+        function closeSeoDetailModal() {
+            document.getElementById('seoDetailModal').classList.remove('active');
         }
 
         function updateStatsCards(stats) {
@@ -2842,6 +3241,14 @@
             // Top user
             if (stats.top_users && stats.top_users.length > 0) {
                 document.getElementById('topUserName').textContent = stats.top_users[0].username;
+            }
+            // Flagged clicks (included in /api/admin/stats from db_get_admin_stats)
+            const flaggedEl = document.getElementById('flaggedClicksCount');
+            if (flaggedEl) {
+                const count = stats.flagged_clicks_count ?? 0;
+                const flags = stats.flagged_clicks || [];
+                flaggedEl.textContent = String(count);
+                flaggedClicksData = Array.isArray(flags) ? flags : [];
             }
         }
 
@@ -3138,6 +3545,60 @@
             document.getElementById('todayTeamFilter').value = '';
         }
 
+        // Flagged Clicks Modal
+        async function openFlaggedClicksModal() {
+            const modal = document.getElementById('flaggedClicksModal');
+            modal.classList.add('active');
+            const tbody = document.getElementById('flaggedClicksBody');
+            tbody.innerHTML = '<tr><td colspan="4" class="loading"><div class="spinner"></div>Loading...</td></tr>';
+
+            // Data comes from /api/admin/stats (same request as the rest of the dashboard)
+            document.getElementById('flaggedTotalCount').textContent = flaggedClicksData.length;
+            document.getElementById('flaggedUniqueKeywords').textContent = new Set((flaggedClicksData || []).map(f => f.keyword)).size;
+            document.getElementById('flaggedUniqueUsers').textContent = new Set((flaggedClicksData || []).map(f => f.flagged_by)).size;
+            renderFlaggedClicksTable(flaggedClicksData || []);
+        }
+
+        function renderFlaggedClicksTable(flags) {
+            const tbody = document.getElementById('flaggedClicksBody');
+            if (!flags || flags.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="empty-state"><div class="empty-state-icon">📭</div>No flagged clicks yet</td></tr>';
+                return;
+            }
+            tbody.innerHTML = flags.map(f => `
+                <tr>
+                    <td>
+                        <div class="user-info">
+                            <div class="avatar">${(f.flagged_by || '').charAt(0).toUpperCase()}</div>
+                            <span>${f.flagged_by || '-'}</span>
+                        </div>
+                    </td>
+                    <td><span class="team-tag">${f.team || '-'}</span></td>
+                    <td style="max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${(f.keyword || '').replace(/"/g, '&quot;')}">${f.keyword || '-'}</td>
+                    <td style="color: var(--text-secondary); font-size: 0.85rem;">${f.flagged_at || '-'}</td>
+                </tr>
+            `).join('');
+        }
+
+        function filterFlaggedTable() {
+            const search = document.getElementById('flaggedSearch').value.toLowerCase();
+            if (!search) {
+                renderFlaggedClicksTable(flaggedClicksData);
+                return;
+            }
+            const filtered = flaggedClicksData.filter(f =>
+                (f.flagged_by || '').toLowerCase().includes(search) ||
+                (f.team || '').toLowerCase().includes(search) ||
+                (f.keyword || '').toLowerCase().includes(search)
+            );
+            renderFlaggedClicksTable(filtered);
+        }
+
+        function closeFlaggedClicksModal() {
+            document.getElementById('flaggedClicksModal').classList.remove('active');
+            document.getElementById('flaggedSearch').value = '';
+        }
+
         // User Modal
         async function openUserModal(username) {
             const modal = document.getElementById('userModal');
@@ -3203,6 +3664,12 @@
             }
         });
 
+        document.getElementById('seoDetailModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeSeoDetailModal();
+            }
+        });
+
         // Enter key for login
         document.getElementById('adminPassword').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') adminLogin();
@@ -3214,8 +3681,6 @@
     </script>
 </body>
 </html>
-
-
 
 
 
