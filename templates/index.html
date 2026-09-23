@@ -1,5 +1,4 @@
-<!-- 
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1644,7 +1643,7 @@
     
     <div class="auth-container" id="authSection">
         <div class="auth-card">
-          
+            
             <div id="loginForm">
                 <h2>Welcome Back</h2>
                 <p>Sign in to continue to the dashboard</p>
@@ -1683,7 +1682,7 @@
                 <p class="error-msg" id="loginError"></p>
             </div>
 
-          
+            
             <div id="forgotPasswordForm" class="hidden">
                 <h2>Reset Password</h2>
                 <p>Enter your username and team to verify identity</p>
@@ -1725,7 +1724,7 @@
                 <p class="success-msg" id="resetSuccess"></p>
             </div>
 
-       
+          
             <div id="registerForm" class="hidden">
                 <h2>Create Account</h2>
                 <p>Register to start selecting keywords</p>
@@ -1781,9 +1780,9 @@
 
 
     <div class="container dashboard" id="dashboard">
-      
-        <section class="keywords-section">
         
+        <section class="keywords-section">
+          
             <div class="search-hero">
                 <div class="search-container">
                     <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1795,7 +1794,7 @@
                 </div>
             </div>
 
-      
+       
             <div class="filters-row">
                 <div class="filters-left">
                     <div class="filter-chip-group">
@@ -1833,7 +1832,7 @@
                 </div>
             </div>
 
-   
+          
             <div class="stats-row">
                 <div class="stat-card-new">
                     <div class="stat-icon-box blue">📊</div>
@@ -1864,25 +1863,25 @@
                     </div>
                 </div>
             </div>
-       
+           
             <span id="totalCount" style="display:none;">0</span>
             
- 
+         
             <div class="keywords-grid" id="keywordsGrid">
-               
+                
             </div>
             
-       
+            
             <div class="pagination-container" id="keywordsPagination">
-               
+           
             </div>
         </section>
 
-
+        
         <section class="selections-section">
             <h2 class="section-title">Picked Keywords</h2>
             
-          
+        
             <div class="filter-bar">
                 <div class="filter-group">
                     <label>From:</label>
@@ -1936,12 +1935,13 @@
         </section>
     </div>
 
-   
+    
     <div class="toast" id="toast">
         <span class="toast-icon">✨</span>
         <span class="toast-message" id="toastMessage">Notification</span>
     </div>
 
+    
     <div class="modal-overlay" id="statsModal" onclick="closeStatsModal(event)">
         <div class="modal" onclick="event.stopPropagation()">
             <div class="modal-header">
@@ -1961,7 +1961,7 @@
                 </div>
             </div>
             <div class="stats-modal-list" id="statsModalList">
-              
+           
             </div>
         </div>
     </div>
@@ -1986,7 +1986,7 @@
                 </div>
             </div>
             
-         
+          
             <div class="filter-bar" style="margin-bottom: 1rem;">
                 <div class="filter-group">
                     <label>From:</label>
@@ -2010,13 +2010,13 @@
             </div>
             
             <div class="modal-users-list" id="modalUsersList">
-            
+               
             </div>
         </div>
     </div>
 
 
-  
+
     <div id="usersModal" class="modal-overlay">
         <div class="modal" style="max-width: 500px;">
             <div class="modal-header">
@@ -3248,7 +3248,7 @@ function getFilteredModalUsers() {
 //                     ${group.keyword}
 //                 </span>
 //             </td>
-//            
+//      
 //             <td>${teamBadgesHTML}</td>
 //             <td><span class="timestamp">${group.latestTime}</span></td>
 //         </tr>
@@ -3886,8 +3886,6 @@ function getFilteredModalUsers() {
 
 
 
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -4102,6 +4100,19 @@ function getFilteredModalUsers() {
             background: linear-gradient(135deg, #8e44ad, #7d3c98);
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(155, 89, 182, 0.3);
+        }
+
+        .btn-instagram {
+            background: linear-gradient(135deg, #f58529, #dd2a7b, #8134af);
+            color: white;
+            border: none;
+            font-weight: 600;
+        }
+
+        .btn-instagram:hover {
+            opacity: 0.92;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(221, 42, 123, 0.3);
         }
 
         /* Main Container */
@@ -5522,6 +5533,9 @@ function getFilteredModalUsers() {
                     <span class="name" id="displayName">User</span>
                     <span class="team" id="displayTeam">Team</span>
                 </div>
+                <button class="btn btn-instagram" onclick="goToInstagram()" title="Instagram Posts">
+                    Instagram
+                </button>
                 <button class="btn btn-admin hidden" id="adminBtn" onclick="goToAdmin()" title="Admin Dashboard">
                     📊 Admin
                 </button>
@@ -6328,6 +6342,10 @@ function getFilteredModalUsers() {
             
             // Start auto-refresh (every 2 minutes)
             startAutoRefresh();
+        }
+
+        function goToInstagram() {
+            window.location.href = '/instagram';
         }
 
         function goToAdmin() {
