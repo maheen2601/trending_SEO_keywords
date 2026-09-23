@@ -1637,8 +1637,8 @@
 
 
 
-import eventlet
-eventlet.monkey_patch()
+# import eventlet
+# eventlet.monkey_patch()
 import sys
 import io
 # Fix Windows console encoding for Unicode
