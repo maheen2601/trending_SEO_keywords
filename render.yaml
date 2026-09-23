@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: seo-keywords-app
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --worker-class geventwebsocket.gunicorn.workers.GeventWebSocketWorker -w 1 --bind 0.0.0.0:$PORT --timeout 120 wsgi:application
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
