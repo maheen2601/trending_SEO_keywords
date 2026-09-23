@@ -1,6 +1,5 @@
 # import eventlet
 # eventlet.monkey_patch()
-
 # import sys
 # import io
 # # Fix Windows console encoding for Unicode
@@ -43,9 +42,9 @@
 # selections_cache = []  # Cache selections to avoid repeated DB calls
 # cache_loaded = False
 
-# # ------------------ Google Sheets Configuration ------------------
-# # SHEET_ID = "1YeAVnMLPV5nfRE1hUbqyqmhXbBbcKzQC1JK86gPQEiY"
-# # CREDENTIALS_FILE = "credentials.json"
+# # # ------------------ Google Sheets Configuration ------------------
+# # # SHEET_ID = "1YeAVnMLPV5nfRE1hUbqyqmhXbBbcKzQC1JK86gPQEiY"
+# # # CREDENTIALS_FILE = "credentials.json"
 
 # SHEET_ID = "1YeAVnMLPV5nfRE1hUbqyqmhXbBbcKzQC1JK86gPQEiY"
 # # CREDENTIALS_FILE = "credentials.json"
@@ -123,6 +122,16 @@
 #                 team TEXT NOT NULL DEFAULT '',
 #                 flagged_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 #                 UNIQUE (keyword, team)
+#             );
+#         """)
+        
+#         # Create login_logs table to track user logins
+#         cur.execute("""
+#             CREATE TABLE IF NOT EXISTS login_logs (
+#                 id SERIAL PRIMARY KEY,
+#                 username TEXT NOT NULL,
+#                 team TEXT NOT NULL,
+#                 logged_in_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 #             );
 #         """)
         
@@ -712,15 +721,39 @@
 #             """, date_only_params)
 #         team_stats = [{"team": row[0], "count": row[1]} for row in cur.fetchall()]
         
-#         # Selections by date (last 30 days) - with team filter
-#         cur.execute(f"""
-#             SELECT DATE(selected_at) as date, COUNT(*) as count 
-#             FROM keyword_selections 
-#             WHERE selected_at >= CURRENT_DATE - INTERVAL '30 days' {combined_filter}
-#             GROUP BY DATE(selected_at) 
-#             ORDER BY date DESC
-#             LIMIT 30
-#         """, params)
+#         # Selections by date - respects date filters, defaults to last 30 days if no filter
+#         if from_date or to_date:
+#             # Use user-specified date range
+#             daily_query = f"""
+#                 SELECT DATE(selected_at) as date, COUNT(*) as count 
+#                 FROM keyword_selections 
+#                 WHERE 1=1 {combined_filter}
+#                 GROUP BY DATE(selected_at) 
+#                 ORDER BY date DESC
+#             """
+#             cur.execute(daily_query, params)
+#         else:
+#             # Default to last 30 days when no date filter
+#             if team:
+#                 daily_query = """
+#                     SELECT DATE(selected_at) as date, COUNT(*) as count 
+#                     FROM keyword_selections 
+#                     WHERE selected_at >= CURRENT_DATE - INTERVAL '30 days' AND team = %s
+#                     GROUP BY DATE(selected_at) 
+#                     ORDER BY date DESC
+#                     LIMIT 30
+#                 """
+#                 cur.execute(daily_query, (team,))
+#             else:
+#                 daily_query = """
+#                     SELECT DATE(selected_at) as date, COUNT(*) as count 
+#                     FROM keyword_selections 
+#                     WHERE selected_at >= CURRENT_DATE - INTERVAL '30 days'
+#                     GROUP BY DATE(selected_at) 
+#                     ORDER BY date DESC
+#                     LIMIT 30
+#                 """
+#                 cur.execute(daily_query)
 #         daily_stats = [{"date": str(row[0]), "count": row[1]} for row in cur.fetchall()]
         
 #         # Top users (with date and team filter)
@@ -748,9 +781,89 @@
 #         # Flagged clicks - filtered by date and team
 #         flags = db_get_all_flagged_clicks(from_date, to_date, team)
         
+#         # Active selectors (unique users who made selections in the period)
+#         cur.execute(f"""
+#             SELECT COUNT(DISTINCT username) 
+#             FROM keyword_selections 
+#             WHERE 1=1 {combined_filter}
+#         """, params)
+#         active_selectors = cur.fetchone()[0]
+        
+#         # All users who made selections (for modal - not limited to top 10)
+#         cur.execute(f"""
+#             SELECT username, team, COUNT(*) as count 
+#             FROM keyword_selections 
+#             WHERE 1=1 {combined_filter}
+#             GROUP BY username, team 
+#             ORDER BY count DESC
+#         """, params)
+#         all_selectors = [{"username": row[0], "team": row[1], "count": row[2]} for row in cur.fetchall()]
+        
+#         # Get total suggested keywords from sheet (filtered by date if applicable)
+#         keywords_data = get_google_sheet_data()
+#         total_suggested = 0
+#         unique_selected_keywords = set()
+        
+#         # Parse date filters for keyword filtering
+#         filter_from = None
+#         filter_to = None
+#         if from_date:
+#             try:
+#                 filter_from = datetime.strptime(from_date, '%Y-%m-%d').date()
+#             except:
+#                 pass
+#         if to_date:
+#             try:
+#                 filter_to = datetime.strptime(to_date, '%Y-%m-%d').date()
+#             except:
+#                 pass
+        
+#         # If no date filter, default to today in PKT
+#         if not filter_from and not filter_to:
+#             filter_from = datetime.now(PKT).date()
+#             filter_to = datetime.now(PKT).date()
+        
+#         for kw in keywords_data:
+#             kw_date_str = kw.get('date', '')
+#             kw_date = None
+#             if kw_date_str:
+#                 for fmt in ['%d-%m-%Y', '%Y-%m-%d', '%d/%m/%Y']:
+#                     try:
+#                         kw_date = datetime.strptime(kw_date_str, fmt).date()
+#                         break
+#                     except:
+#                         continue
+            
+#             # Check if keyword is in date range
+#             in_range = True
+#             if kw_date:
+#                 if filter_from and kw_date < filter_from:
+#                     in_range = False
+#                 if filter_to and kw_date > filter_to:
+#                     in_range = False
+            
+#             if in_range:
+#                 total_suggested += 1
+        
+#         # Get unique keywords selected (for "not selected" calculation)
+#         cur.execute(f"""
+#             SELECT COUNT(DISTINCT keyword) 
+#             FROM keyword_selections 
+#             WHERE 1=1 {combined_filter}
+#         """, params)
+#         unique_keywords_selected = cur.fetchone()[0]
+        
+#         # Calculate not selected (suggested - unique selected)
+#         not_selected = max(0, total_suggested - unique_keywords_selected)
+        
 #         return {
 #             "total_users": total_users,
 #             "total_selections": total_selections,
+#             "total_suggested": total_suggested,
+#             "not_selected": not_selected,
+#             "active_selectors": active_selectors,
+#             "all_selectors": all_selectors,
+#             "unique_keywords_selected": unique_keywords_selected,
 #             "team_stats": team_stats,
 #             "daily_stats": daily_stats,
 #             "top_users": top_users,
@@ -764,6 +877,11 @@
 #         return {
 #             "total_users": 0,
 #             "total_selections": 0,
+#             "total_suggested": 0,
+#             "not_selected": 0,
+#             "active_selectors": 0,
+#             "all_selectors": [],
+#             "unique_keywords_selected": 0,
 #             "team_stats": [],
 #             "daily_stats": [],
 #             "top_users": [],
@@ -932,6 +1050,63 @@
 #     status_code = 200 if result["success"] else 400
 #     return jsonify(result), status_code
 
+# def db_log_login(username, team):
+#     """Log a user login event"""
+#     conn = None
+#     try:
+#         conn = get_db_connection()
+#         cur = conn.cursor()
+#         cur.execute(
+#             "INSERT INTO login_logs (username, team) VALUES (%s, %s)",
+#             (username, team)
+#         )
+#         conn.commit()
+#     except Exception as e:
+#         print(f"[DB] Log login error: {e}")
+#     finally:
+#         if conn:
+#             cur.close()
+#             conn.close()
+
+# def db_get_today_logins():
+#     """Get unique users who logged in today (PKT timezone)"""
+#     conn = None
+#     try:
+#         conn = get_db_connection()
+#         cur = conn.cursor()
+        
+#         # Get today's date in PKT
+#         today_pkt = datetime.now(PKT).strftime('%Y-%m-%d')
+        
+#         # Get all logins from today, then filter by PKT date
+#         cur.execute("""
+#             SELECT DISTINCT ON (username) username, team, logged_in_at
+#             FROM login_logs 
+#             WHERE logged_in_at >= CURRENT_DATE - INTERVAL '1 day'
+#             ORDER BY username, logged_in_at DESC
+#         """)
+#         rows = cur.fetchall()
+        
+#         # Filter to only include logins from today in PKT
+#         logins = []
+#         for row in rows:
+#             login_time_pkt = to_pakistan_time(row[2])
+#             if login_time_pkt.startswith(today_pkt):
+#                 logins.append({
+#                     "username": row[0],
+#                     "team": row[1],
+#                     "logged_in_at": login_time_pkt
+#                 })
+        
+#         return logins
+#     except Exception as e:
+#         print(f"[DB] Get today logins error: {e}")
+#         return []
+#     finally:
+#         if conn:
+#             cur.close()
+#             conn.close()
+
 # @app.route('/api/login', methods=['POST'])
 # def login():
 #     data = request.json
@@ -944,6 +1119,8 @@
 #     result = db_login_user(name, password)
 #     if result["success"]:
 #         session['user'] = name
+#         # Log the login event
+#         db_log_login(name, result["user"]["team"])
 #         return jsonify(result)
 #     else:
 #         return jsonify(result), 401
@@ -1146,16 +1323,7 @@
 #     if not cache_loaded:
 #         load_selections_cache()
     
-#     # Filter selections by team if specified
-#     if team:
-#         filtered_selections = [s for s in selections_cache if s.get('team') == team]
-#     else:
-#         filtered_selections = selections_cache
-    
-#     # Set of selected row keys (same as frontend: keyword|date|time|id) so duplicate keywords count per row
-#     selected_row_keys = set(s.get('keyword_key') or s['keyword'] for s in filtered_selections)
-    
-#     # Parse date filters
+#     # Parse date filters first
 #     filter_from = None
 #     filter_to = None
     
@@ -1179,6 +1347,35 @@
 #     if not filter_from and not filter_to:
 #         filter_from = today_pkt
 #         filter_to = today_pkt
+    
+#     # Filter selections by team AND date
+#     def selection_in_date_range(sel):
+#         """Check if selection timestamp is within the date range"""
+#         timestamp = sel.get('timestamp', '')
+#         if not timestamp:
+#             return False
+#         try:
+#             sel_date_str = timestamp.split(' ')[0]  # Get YYYY-MM-DD part
+#             sel_date = datetime.strptime(sel_date_str, '%Y-%m-%d').date()
+#             if filter_from and sel_date < filter_from:
+#                 return False
+#             if filter_to and sel_date > filter_to:
+#                 return False
+#             return True
+#         except:
+#             return False
+    
+#     # Filter selections by team and date
+#     filtered_selections = []
+#     for s in selections_cache:
+#         if team and s.get('team') != team:
+#             continue
+#         if not selection_in_date_range(s):
+#             continue
+#         filtered_selections.append(s)
+    
+#     # Set of selected row keys (same as frontend: keyword|date|time|id) so duplicate keywords count per row
+#     selected_row_keys = set(s.get('keyword_key') or s['keyword'] for s in filtered_selections)
     
 #     # Aggregate by SEO
 #     seo_stats = {}
@@ -1245,19 +1442,39 @@
 
 # @app.route('/api/admin/today-selections', methods=['GET'])
 # def get_today_selections():
-#     """Get all selections made today"""
+#     """Get selections with optional date and team filters (defaults to today in PKT)"""
 #     conn = None
 #     try:
 #         conn = get_db_connection()
 #         cur = conn.cursor()
         
-#         # Get today's selections
-#         cur.execute("""
+#         # Get filter parameters
+#         from_date = request.args.get('from_date')
+#         to_date = request.args.get('to_date')
+#         team = request.args.get('team')
+        
+#         # Get today's date in PKT as default
+#         today_pkt = datetime.now(PKT).strftime('%Y-%m-%d')
+        
+#         # Use provided dates or default to today
+#         filter_from = from_date if from_date else today_pkt
+#         filter_to = to_date if to_date else today_pkt
+        
+#         # Build query with filters
+#         query = """
 #             SELECT username, team, keyword, selected_at 
 #             FROM keyword_selections 
-#             WHERE DATE(selected_at) = CURRENT_DATE
-#             ORDER BY selected_at DESC
-#         """)
+#             WHERE selected_at >= %s AND selected_at <= %s
+#         """
+#         params = [filter_from, filter_to + " 23:59:59"]
+        
+#         if team:
+#             query += " AND team = %s"
+#             params.append(team)
+        
+#         query += " ORDER BY selected_at DESC"
+        
+#         cur.execute(query, params)
 #         rows = cur.fetchall()
         
 #         selections = []
@@ -1265,11 +1482,12 @@
 #         unique_keywords = set()
         
 #         for row in rows:
+#             timestamp_pkt = to_pakistan_time(row[3])
 #             selections.append({
 #                 "user": row[0],
 #                 "team": row[1],
 #                 "keyword": row[2],
-#                 "timestamp": to_pakistan_time(row[3])
+#                 "timestamp": timestamp_pkt
 #             })
 #             unique_users.add(row[0])
 #             unique_keywords.add(row[2])
@@ -1293,6 +1511,15 @@
 #         if conn:
 #             cur.close()
 #             conn.close()
+
+# @app.route('/api/admin/today-logins', methods=['GET'])
+# def get_today_logins():
+#     """Get unique users who logged in today"""
+#     logins = db_get_today_logins()
+#     return jsonify({
+#         "logins": logins,
+#         "count": len(logins)
+#     })
 
 # # ------------------ WebSocket Events ------------------
 # @socketio.on('connect')
@@ -1404,6 +1631,12 @@
 
 
 
+
+
+
+
+
+
 import eventlet
 eventlet.monkey_patch()
 import sys
@@ -1411,7 +1644,7 @@ import io
 # Fix Windows console encoding for Unicode
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
-from flask import Flask, render_template, request, jsonify, session
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from flask_socketio import SocketIO, emit
 from flask_cors import CORS
 import gspread
@@ -1421,6 +1654,7 @@ import json
 import os
 import psycopg2
 import hashlib
+import time
 
 # Pakistan Standard Time (UTC+5)
 PKT = timezone(timedelta(hours=5))
@@ -2435,6 +2669,55 @@ def get_google_sheet_data():
         ]
 
 # ------------------ Routes ------------------
+
+def get_instagram_post():
+    """Fetch Instagram posts from the database."""
+    try:
+        start_time = time.time()
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT page_name, link, post_image, caption,
+                   timestamp AT TIME ZONE 'Asia/Karachi'
+            FROM instagram_post
+            ORDER BY timestamp DESC
+            """
+        )
+        data = cursor.fetchall()
+        results = [
+            {
+                "page_name": row[0],
+                "link": row[1],
+                "post_image": row[2],
+                "caption": row[3],
+                "timestamp": row[4].strftime("%Y-%m-%d %H:%M:%S") if row[4] else None,
+            }
+            for row in data
+        ]
+        print(f"[DB] Instagram fetch time: {time.time() - start_time:.2f}s")
+        cursor.close()
+        conn.close()
+        return results
+    except Exception as e:
+        print(f"[DB] Error fetching Instagram posts: {e}")
+        return []
+
+
+@app.route('/instagram')
+def instagram_page():
+    if 'user' not in session:
+        return redirect(url_for('index'))
+
+    instagram_post = get_instagram_post()
+    instagram_pages = sorted({post["page_name"] for post in instagram_post})
+    return render_template(
+        'instagram.html',
+        instagram_post=instagram_post,
+        instagram_pages=instagram_pages,
+    )
+
+
 @app.route('/')
 def index():
     return render_template('index.html')
