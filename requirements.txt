@@ -1,23 +1,14 @@
-psycopg2
-cloudinary
-selenium
-requests
-webdriver-manager
-gnews
-python-dateutil
-pandas
-tabulate
-pytrends
-urllib3<2.0
 
-# Flask Web App Dependencies
 flask
 flask-socketio
 flask-cors
+gunicorn==22.0.0
+gevent==24.2.1
+gevent-websocket==0.10.1
+psycopg2-binary
 gspread
-
 oauth2client
-gunicorn
-eventlet
-
+python-dateutil
+pandas
+urllib3<2.0
 
